@@ -179,7 +179,7 @@ body {
     <div class="fragments-mini" id="fragMini1"></div>
   </div>
   <div class="vocab-card" id="vocabCard">
-    <img class="vocab-img" id="vocabImg" src="" alt="">
+    <img class="vocab-img" id="vocabImg" src="" alt="" loading="lazy">
     <div class="vocab-word" id="vocabWord"></div>
     <div class="vocab-counter" id="vocabCounter"></div>
   </div>
@@ -349,6 +349,13 @@ function stopAllRecording() {
   recordedChunks = [];
   if (recordTimerInterval) { clearInterval(recordTimerInterval); recordTimerInterval = null; }
   recordSeconds = 0;
+  clearAllTimerDisplays();
+}
+function clearAllTimerDisplays() {
+  for (const s of ['1','2','3','4']) {
+    const el = document.getElementById('recordTimer' + s);
+    if (el) el.textContent = '';
+  }
 }
 
 function startRecording(stepName) {
@@ -382,24 +389,33 @@ function startRecording(stepName) {
 }
 
 function stopRecordingAndSave() {
-  if (!mediaRecorder || mediaRecorder.state !== 'recording') return null;
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+    return Promise.resolve(null);
+  }
   return new Promise(resolve => {
-    mediaRecorder.onstop = () => {
+    const mr = mediaRecorder;
+    mr.onstop = () => {
       const blob = new Blob(recordedChunks, { type: 'audio/webm' });
       const url = URL.createObjectURL(blob);
+      if (recordTimerInterval) { clearInterval(recordTimerInterval); recordTimerInterval = null; }
+      clearAllTimerDisplays();
       resolve({ blob, url });
     };
-    mediaRecorder.stop();
+    mr.stop();
   });
 }
 
 function updateRecordUI(isRec) {
-  const btnId = 'btnRecord' + ({read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep]||'1');
-  const hintId = 'recordHint' + ({read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep]||'1');
+  const step = {read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep] || '1';
+  const btnId = 'btnRecord' + step;
+  const hintId = 'recordHint' + step;
+  const timerId = 'recordTimer' + step;
   const btn = document.getElementById(btnId);
   const hint = document.getElementById(hintId);
+  const timer = document.getElementById(timerId);
   if (btn) { btn.classList.toggle('recording', isRec); btn.textContent = isRec ? '⏹' : '🎤'; }
   if (hint) { hint.textContent = isRec ? '正在录音中...' : '点按开始录音'; }
+  if (!isRec && timer) { timer.textContent = ''; }
 }
 
 function updateRecordTimerDisplay() {
@@ -461,9 +477,12 @@ function nextVocab() { if (currentVocab < vocabList.length - 1) { currentVocab++
 function toggleRecord1() {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     stopRecordingAndSave().then(result => {
-      vocabRecorded[currentVocab] = true;
-      updateVocabUI();
+      if (result) {
+        vocabRecorded[currentVocab] = true;
+        updateVocabUI();
+      }
       updateRecordUI(false);
+      recordingForStep = null;
     });
   } else {
     startRecording('read');
@@ -473,6 +492,7 @@ function toggleRecord1() {
 function finishStep1() {
   stopAllRecording();
   updateRecordUI(false);
+  recordingForStep = null;
   fragments[0] = true;
   updateAllFragments();
   showStep2();
@@ -541,6 +561,7 @@ function toggleRecord2() {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     stopRecordingAndSave().then(() => {
       updateRecordUI(false);
+      recordingForStep = null;
       document.getElementById('btnDoneSing').style.display = 'inline-block';
     });
   } else {
@@ -552,6 +573,7 @@ function finishStep2() {
   stopAllAudio();
   stopAllRecording();
   updateRecordUI(false);
+  recordingForStep = null;
   fragments[1] = true;
   updateAllFragments();
   showStep3();
@@ -607,6 +629,7 @@ function toggleRecord3() {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     stopRecordingAndSave().then(() => {
       updateRecordUI(false);
+      recordingForStep = null;
       document.getElementById('btnDoneEcho').style.display = 'inline-block';
     });
   } else {
@@ -618,8 +641,8 @@ function finishStep3() {
   stopAllAudio();
   stopAllRecording();
   updateRecordUI(false);
+  recordingForStep = null;
   if (echoRound === 0) {
-    // First round done, go to second round
     echoRound = 1;
     updateEchoUI();
     document.getElementById('btnDoneEcho').style.display = 'none';
@@ -677,6 +700,7 @@ function toggleRecord4() {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     stopRecordingAndSave().then(() => {
       updateRecordUI(false);
+      recordingForStep = null;
       document.getElementById('btnDoneFull').style.display = 'inline-block';
     });
   } else {
@@ -688,6 +712,7 @@ function finishStep4() {
   stopAllAudio();
   stopAllRecording();
   updateRecordUI(false);
+  recordingForStep = null;
   fragments[3] = true;
   updateAllFragments();
   showBadge();
