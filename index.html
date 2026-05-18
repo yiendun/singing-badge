@@ -3,858 +3,708 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>岭南歌唱达人</title>
+<title>岭南小歌星 — 齐齐望过去</title>
 <style>
-  :root {
-    --red: #C41E3A;
-    --gold: #D4A843;
-    --green: #5B8C5A;
-    --cream: #FFF8EC;
-    --dark: #3D2C2C;
-    --pink: #FFAB91;
-    --blue: #5B9BD5;
-    --orange: #F4A460;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    font-family: 'PingFang SC','Microsoft YaHei','Noto Sans HK',sans-serif;
-    background: linear-gradient(180deg, #FFF8EC 0%, #FFE8D6 50%, #FFD4B8 100%);
-    min-height: 100vh; min-height: 100dvh;
-    overflow-x: hidden;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-  }
-  .page {
-    display: none; flex-direction: column; align-items: center;
-    min-height: 100vh; min-height: 100dvh;
-    padding: 20px 16px;
-  }
-  .page.active { display: flex; }
+:root {
+  --red: #C41E3A; --gold: #D4A843; --green: #5B8C5A;
+  --cream: #FFF8EC; --dark: #3D2C2C; --pink: #FFAB91;
+  --blue: #5B9BD5; --orange: #F4A460;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'PingFang SC','Microsoft YaHei','Noto Sans HK',sans-serif;
+  background: linear-gradient(180deg, #FFF8EC 0%, #FFE8D6 50%, #FFD4B8 100%);
+  min-height: 100vh; min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.page { display:none; flex-direction:column; align-items:center; min-height:100vh; min-height:100dvh; padding:20px 16px; }
+.page.active { display:flex; }
 
-  /* ===== Welcome Page ===== */
-  .welcome-top { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .lingnan-decor {
-    display: flex; gap: 12px; align-items: center;
-    margin-bottom: 16px;
-  }
-  .decor-icon { font-size: 36px; animation: float 3s ease-in-out infinite; }
-  .decor-icon:nth-child(2) { animation-delay: 0.5s; }
-  .decor-icon:nth-child(3) { animation-delay: 1s; }
-  @keyframes float {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-  .wok-ear-svg { width: 200px; height: 60px; margin-bottom: 8px; }
-  .title-main {
-    font-size: 32px; font-weight: 900; color: var(--red);
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-    letter-spacing: 4px;
-  }
-  .title-sub {
-    font-size: 15px; color: var(--dark); margin-top: 6px;
-    background: var(--gold); color: #fff; padding: 4px 16px;
-    border-radius: 20px; font-weight: 600;
-  }
-  .mascot-area { margin: 12px 0; position: relative; }
-  .mascot-circle {
-    width: 140px; height: 140px; border-radius: 50%;
-    background: linear-gradient(135deg, #FFD4B8, #FFAB91);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 72px; box-shadow: 0 6px 24px rgba(196,30,58,0.25);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%,100% { transform: scale(1); box-shadow: 0 6px 24px rgba(196,30,58,0.25); }
-    50% { transform: scale(1.05); box-shadow: 0 8px 32px rgba(196,30,58,0.4); }
-  }
-  .btn-start {
-    background: linear-gradient(135deg, #C41E3A, #E63946);
-    color: #fff; border: none; padding: 16px 56px;
-    font-size: 22px; font-weight: 700; border-radius: 50px;
-    letter-spacing: 3px; cursor: pointer;
-    box-shadow: 0 6px 20px rgba(196,30,58,0.4);
-    transition: transform 0.15s;
-  }
-  .btn-start:active { transform: scale(0.95); }
+/* ===== Welcome ===== */
+.welcome-bg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+.welcome-bg .circle1 { position:absolute; top:-80px; right:-60px; width:220px; height:220px; border-radius:50%; background:rgba(255,171,145,0.25); }
+.welcome-bg .circle2 { position:absolute; bottom:-40px; left:-50px; width:180px; height:180px; border-radius:50%; background:rgba(212,168,67,0.18); }
+.welcome-inner { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; }
+.welcome-animals { font-size:48px; letter-spacing:8px; margin-bottom:12px; animation: bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.title-card {
+  background:#fff; border-radius:24px; padding:24px 32px;
+  box-shadow: 0 8px 32px rgba(196,30,58,0.12);
+  text-align:center; margin-bottom:20px;
+}
+.title-card .decor-line { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.title-card .decor-line span { font-size:22px; }
+.title-main { font-size:34px; font-weight:900; color:var(--red); letter-spacing:4px; }
+.title-sub { font-size:14px; color:var(--gold); font-weight:700; margin-top:4px; letter-spacing:2px; }
+.step-preview { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; justify-content:center; }
+.step-dot {
+  width:48px; height:48px; border-radius:50%; background:#fff;
+  border:3px dashed #ddd; display:flex; align-items:center; justify-content:center;
+  font-size:22px; transition:all 0.4s;
+}
+.step-dot.done { border-color:var(--gold); background:#FFF9E6; box-shadow:0 0 12px rgba(212,168,67,0.3); }
+.btn-start {
+  background:linear-gradient(135deg, #C41E3A, #E63946);
+  color:#fff; border:none; padding:18px 60px; font-size:22px; font-weight:700;
+  border-radius:50px; letter-spacing:3px; cursor:pointer;
+  box-shadow:0 6px 24px rgba(196,30,58,0.4);
+  transition:transform 0.15s;
+}
+.btn-start:active { transform:scale(0.95); }
 
-  /* ===== Sing Page ===== */
-  .sing-header {
-    width: 100%; display: flex; align-items: center; gap: 12px;
-    margin-bottom: 16px;
-  }
-  .btn-back {
-    background: #fff; border: 2px solid #ddd; border-radius: 50%;
-    width: 40px; height: 40px; font-size: 18px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .progress-bar-wrap {
-    flex:1; height: 10px; background: #eee; border-radius: 5px; overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%; background: var(--red); border-radius: 5px;
-    transition: width 0.5s ease; width: 0%;
-  }
-  .progress-text { font-size: 13px; color: #888; font-weight: 600; }
+/* ===== Step Header ===== */
+.step-header { width:100%; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.btn-back { background:#fff; border:2px solid #eee; border-radius:50%; width:40px; height:40px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.step-indicator { flex:1; text-align:center; font-size:15px; font-weight:700; color:var(--red); letter-spacing:2px; }
+.fragments-mini { display:flex; gap:6px; }
+.frag-mini { width:24px; height:24px; border-radius:50%; border:2px dashed #ddd; background:#f9f9f9; transition:all 0.4s; font-size:12px; display:flex; align-items:center; justify-content:center; }
+.frag-mini.got { border-color:var(--gold); background:#FFF9E6; box-shadow:0 0 8px rgba(212,168,67,0.3); }
 
-  .lyric-card {
-    width: 100%; background: #fff; border-radius: 20px;
-    padding: 28px 20px; text-align: center;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    margin-bottom: 16px;
-    position: relative; overflow: hidden;
-  }
-  .lyric-current {
-    font-size: 24px; font-weight: 700; color: var(--dark);
-    line-height: 1.8; transition: all 0.3s;
-  }
-  .lyric-animal { font-size: 40px; margin-top: 8px; display: block; }
+/* ===== Step 1: Read ===== */
+.vocab-card {
+  width:100%; background:#fff; border-radius:20px; padding:20px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.06); text-align:center;
+  margin-bottom:16px;
+}
+.vocab-img { width:160px; height:160px; object-fit:contain; margin-bottom:12px; }
+.vocab-word { font-size:36px; font-weight:900; color:var(--dark); letter-spacing:4px; }
+.vocab-counter { font-size:13px; color:#999; margin-top:6px; }
+.vocab-nav { display:flex; gap:16px; align-items:center; margin-bottom:20px; }
+.vocab-nav button { background:#fff; border:2px solid #eee; border-radius:50%; width:44px; height:44px; font-size:20px; cursor:pointer; }
 
-  .fragments-row {
-    display: flex; gap: 12px; margin-bottom: 20px; width: 100%;
-    justify-content: center;
-  }
-  .fragment-slot {
-    width: 64px; height: 64px; border-radius: 16px;
-    border: 3px dashed #ddd;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    font-size: 28px;
-    transition: all 0.4s ease;
-    background: #f9f9f9;
-    position: relative;
-  }
-  .fragment-slot.unlocked {
-    border: 3px solid var(--gold);
-    background: #fff;
-    animation: unlockPop 0.5s ease;
-    box-shadow: 0 0 16px rgba(212,168,67,0.4);
-  }
-  @keyframes unlockPop {
-    0% { transform: scale(1); }
-    30% { transform: scale(1.3); }
-    60% { transform: scale(0.9); }
-    100% { transform: scale(1); }
-  }
-  .fragment-check {
-    position: absolute; top: -6px; right: -6px;
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--green); color: #fff;
-    font-size: 12px; display: flex;
-    align-items: center; justify-content: center;
-    transform: scale(0); transition: transform 0.3s 0.3s;
-  }
-  .fragment-slot.unlocked .fragment-check { transform: scale(1); }
+/* ===== Step 2 & 3: Sing Along & Echo ===== */
+.animal-display {
+  width:100%; border-radius:20px; overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,0.1); margin-bottom:12px;
+  aspect-ratio:16/10; position:relative;
+}
+.animal-display img { width:100%; height:100%; object-fit:cover; }
+.animal-label {
+  position:absolute; bottom:0; left:0; right:0;
+  background:linear-gradient(transparent, rgba(0,0,0,0.5));
+  color:#fff; padding:20px 16px 12px; font-size:16px; font-weight:700;
+  text-align:center; letter-spacing:2px;
+}
+.lyric-mini {
+  width:100%; display:flex; gap:6px; margin-bottom:8px; justify-content:center; flex-wrap:wrap;
+}
+.lyric-dot {
+  padding:6px 14px; border-radius:20px; background:#f0f0f0;
+  font-size:13px; color:#999; font-weight:600; transition:all 0.3s;
+}
+.lyric-dot.active { background:var(--red); color:#fff; }
 
-  .sing-controls { width: 100%; text-align: center; }
-  .btn-record {
-    width: 90px; height: 90px; border-radius: 50%;
-    border: none; background: linear-gradient(135deg, #C41E3A, #E63946);
-    color: #fff; font-size: 36px; cursor: pointer;
-    box-shadow: 0 6px 20px rgba(196,30,58,0.35);
-    transition: all 0.2s;
-    display: inline-flex; align-items: center; justify-content: center;
-  }
-  .btn-record:active { transform: scale(0.9); }
-  .btn-record.recording {
-    animation: recordPulse 0.8s ease-in-out infinite;
-    background: linear-gradient(135deg, #ff1744, #ff5252);
-    box-shadow: 0 0 0 0 rgba(255,23,68,0.6);
-  }
-  @keyframes recordPulse {
-    0% { box-shadow: 0 0 0 0 rgba(255,23,68,0.6); }
-    100% { box-shadow: 0 0 0 24px rgba(255,23,68,0); }
-  }
-  .record-hint { font-size: 14px; color: #888; margin-top: 10px; }
-  .recognition-text {
-    margin-top: 8px; font-size: 14px; color: #999;
-    font-style: italic; min-height: 20px;
-  }
-  .mode-toggle {
-    margin-top: 12px; font-size: 13px; color: var(--blue);
-    background: none; border: none; text-decoration: underline; cursor: pointer;
-  }
-  .btn-skip {
-    display: none;
-    margin-top: 12px; background: var(--gold); color: #fff;
-    border: none; padding: 10px 28px; border-radius: 25px;
-    font-size: 16px; font-weight: 600; cursor: pointer;
-  }
-  .btn-skip.show { display: inline-block; }
+/* ===== Step 4: Full Song ===== */
+.mode-choose { display:flex; gap:12px; margin-bottom:16px; width:100%; }
+.mode-btn {
+  flex:1; padding:16px; border-radius:16px; border:3px solid #eee;
+  background:#fff; text-align:center; cursor:pointer; transition:all 0.2s;
+  font-size:16px; font-weight:700;
+}
+.mode-btn.selected { border-color:var(--red); background:#FFF5F5; }
 
-  /* ===== Badge Page ===== */
-  .badge-container { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .badge-canvas-wrap {
-    position: relative; margin-bottom: 8px;
-  }
-  #badgeCanvas { width: 300px; height: 300px; }
-  .badge-title {
-    font-size: 28px; font-weight: 900; color: var(--red);
-    letter-spacing: 3px; text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
-  }
-  .badge-subtitle { font-size: 15px; color: #888; margin: 6px 0 16px; }
-  .btn-restart {
-    background: var(--gold); color: #fff; border: none;
-    padding: 12px 36px; font-size: 18px; font-weight: 700;
-    border-radius: 50px; cursor: pointer; letter-spacing: 2px;
-    box-shadow: 0 4px 16px rgba(212,168,67,0.4);
-  }
-  .btn-save {
-    background: #fff; color: var(--red); border: 2px solid var(--red);
-    padding: 10px 28px; font-size: 15px; font-weight: 600;
-    border-radius: 50px; cursor: pointer; margin-top: 10px;
-  }
-  .confetti-wrap {
-    position: fixed; top:0; left:0; width:100%; height:100%;
-    pointer-events: none; z-index: 999; overflow: hidden;
-  }
-  .confetti {
-    position: absolute; width: 10px; height: 10px;
-    border-radius: 2px; animation: confettiFall linear forwards;
-  }
-  @keyframes confettiFall {
-    0% { transform: translateY(-100px) rotate(0deg); opacity:1; }
-    100% { transform: translateY(105vh) rotate(720deg); opacity:0; }
-  }
-  .qr-section { margin-top: 12px; text-align: center; }
-  .qr-section img { width: 100px; height: 100px; border-radius: 8px; }
-  .qr-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+/* ===== Recording Controls (shared) ===== */
+.record-section { width:100%; text-align:center; }
+.btn-record {
+  width:80px; height:80px; border-radius:50%; border:none;
+  background:linear-gradient(135deg, #C41E3A, #E63946);
+  color:#fff; font-size:32px; cursor:pointer;
+  box-shadow:0 6px 20px rgba(196,30,58,0.35);
+  transition:all 0.2s;
+}
+.btn-record:active { transform:scale(0.9); }
+.btn-record.recording {
+  animation:recordPulse 0.8s ease-in-out infinite;
+  background:linear-gradient(135deg, #ff1744, #ff5252);
+}
+@keyframes recordPulse {
+  0% { box-shadow:0 0 0 0 rgba(255,23,68,0.5); }
+  100% { box-shadow:0 0 0 28px rgba(255,23,68,0); }
+}
+.record-hint { font-size:14px; color:#888; margin-top:8px; }
+.record-timer { font-size:12px; color:#aaa; margin-top:4px; }
+
+.btn-action {
+  margin-top:12px; padding:12px 36px; border-radius:25px;
+  font-size:16px; font-weight:700; cursor:pointer; border:none;
+  letter-spacing:1px;
+}
+.btn-primary { background:var(--red); color:#fff; box-shadow:0 4px 12px rgba(196,30,58,0.3); }
+.btn-gold { background:var(--gold); color:#fff; box-shadow:0 4px 12px rgba(212,168,67,0.3); }
+.btn-outline { background:#fff; color:var(--red); border:2px solid var(--red); }
+.btn:disabled { opacity:0.4; pointer-events:none; }
+
+/* ===== Badge Page ===== */
+.badge-bg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; background:linear-gradient(180deg, #FFF9E6, #FFE8D6); }
+.badge-inner { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.badge-img { width:260px; height:260px; object-fit:contain; border-radius:50%; box-shadow:0 8px 40px rgba(212,168,67,0.4); animation: popIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes popIn { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+.badge-name { font-size:28px; font-weight:900; color:var(--red); margin-top:16px; letter-spacing:3px; }
+.badge-desc { font-size:14px; color:#888; margin:6px 0 16px; }
+
+.confetti-wrap { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
+.confetti { position:absolute; width:10px; height:10px; border-radius:2px; animation:confettiFall linear forwards; }
+@keyframes confettiFall {
+  0%{transform:translateY(-100px) rotate(0deg); opacity:1}
+  100%{transform:translateY(105vh) rotate(720deg); opacity:0}
+}
 </style>
 </head>
 <body>
 
-<!-- Welcome Page -->
+<!-- ===== Welcome Page ===== -->
 <div id="page-welcome" class="page active">
-  <div class="welcome-top">
-    <div class="lingnan-decor">
-      <span class="decor-icon">🌺</span>
-      <span class="decor-icon">🦁</span>
-      <span class="decor-icon">🏯</span>
+  <div class="welcome-bg"><div class="circle1"></div><div class="circle2"></div></div>
+  <div class="welcome-inner">
+    <div class="welcome-animals">🐸 🐷 🐦 🦁</div>
+    <div class="title-card">
+      <div class="decor-line"><span>🏯</span><span>🌺</span><span>🎤</span></div>
+      <div class="title-main">齐齐望过去</div>
+      <div class="title-sub">粤语童谣 · 岭南小歌星挑战</div>
     </div>
-    <svg class="wok-ear-svg" viewBox="0 0 200 60">
-      <path d="M10,50 Q25,10 40,50 Q55,10 70,50 Q85,10 100,50 Q115,10 130,50 Q145,10 160,50 Q175,10 190,50"
-            fill="none" stroke="#C41E3A" stroke-width="3" stroke-linecap="round"/>
-    </svg>
-    <div class="title-main">齐齐望过去</div>
-    <div class="title-sub">粤语童谣 · 歌唱挑战</div>
-    <div class="mascot-area">
-      <div class="mascot-circle">🎤</div>
+    <div class="step-preview" id="stepDots">
+      <div class="step-dot">📖</div><div class="step-dot">🎵</div><div class="step-dot">🎧</div><div class="step-dot">🌟</div>
     </div>
-    <div style="font-size:13px;color:#999;margin-bottom:20px;">
-      集齐碎片，成为岭南歌唱达人！
-    </div>
-    <button class="btn-start" onclick="startSinging()">开 始 唱 歌</button>
-  </div>
-  <div class="qr-section" id="qrSection" style="display:none;">
-    <p style="font-size:12px;color:#aaa;">扫码分享给朋友：</p>
-    <img id="qrImg" src="" alt="QR Code" style="width:80px;height:80px;"/>
+    <button class="btn-start" onclick="startChallenge()">开 始 挑 战</button>
   </div>
 </div>
 
-<!-- Sing Page -->
+<!-- ===== Step 1: 念一念 ===== -->
+<div id="page-read" class="page">
+  <div class="step-header">
+    <button class="btn-back" onclick="goHome()">←</button>
+    <span class="step-indicator">📖 第一关 · 念一念</span>
+    <div class="fragments-mini" id="fragMini1"></div>
+  </div>
+  <div class="vocab-card" id="vocabCard">
+    <img class="vocab-img" id="vocabImg" src="" alt="">
+    <div class="vocab-word" id="vocabWord"></div>
+    <div class="vocab-counter" id="vocabCounter"></div>
+  </div>
+  <div class="vocab-nav">
+    <button id="btnPrevVocab" onclick="prevVocab()">◀</button>
+    <button id="btnNextVocab" onclick="nextVocab()">▶</button>
+  </div>
+  <div class="record-section">
+    <button class="btn-record" id="btnRecord1" onclick="toggleRecord1()">🎤</button>
+    <div class="record-hint" id="recordHint1">点按开始录音跟读</div>
+    <div class="record-timer" id="recordTimer1"></div>
+  </div>
+  <button class="btn-action btn-gold" id="btnDoneRead" onclick="finishStep1()" style="display:none;">完成念一念，领取碎片 ✓</button>
+</div>
+
+<!-- ===== Step 2: 跟唱歌词 ===== -->
 <div id="page-sing" class="page">
-  <div class="sing-header">
-    <button class="btn-back" onclick="goBack()">←</button>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="progressBar"></div>
-    </div>
-    <span class="progress-text" id="progressText">0/4</span>
+  <div class="step-header">
+    <button class="btn-back" onclick="goHome()">←</button>
+    <span class="step-indicator">🎵 第二关 · 跟唱歌词</span>
+    <div class="fragments-mini" id="fragMini2"></div>
   </div>
-  <div class="lyric-card" id="lyricCard">
-    <div class="lyric-current" id="lyricText"></div>
-    <span class="lyric-animal" id="lyricAnimal"></span>
+  <div class="lyric-mini" id="lyricDots"></div>
+  <div class="animal-display" id="animalDisplay2">
+    <img id="animalImg2" src="" alt="">
+    <div class="animal-label" id="animalLabel2"></div>
   </div>
-  <div class="fragments-row" id="fragmentsRow"></div>
-  <div class="sing-controls">
-    <button class="btn-record" id="btnRecord" onclick="toggleRecording()">🎤</button>
-    <div class="record-hint" id="recordHint">点按唱歌</div>
-    <div class="recognition-text" id="recogText"></div>
-    <button class="btn-skip" id="btnSkip" onclick="skipLine()">我唱完啦～</button>
-    <button class="mode-toggle" id="btnModeToggle" onclick="toggleMode()">切换跟唱模式</button>
+  <div class="record-section">
+    <button class="btn-record" id="btnRecord2" onclick="toggleRecord2()">🎤</button>
+    <div class="record-hint" id="recordHint2">播放歌曲后，点按录音跟唱</div>
+    <div class="record-timer" id="recordTimer2"></div>
   </div>
+  <button class="btn-action btn-primary" id="btnPlay2" onclick="togglePlay2()">▶ 播放歌曲</button>
+  <button class="btn-action btn-gold" id="btnDoneSing" onclick="finishStep2()" style="display:none;">完成跟唱，领取碎片 ✓</button>
 </div>
 
-<!-- Badge Page -->
+<!-- ===== Step 3: 接唱 ===== -->
+<div id="page-echo" class="page">
+  <div class="step-header">
+    <button class="btn-back" onclick="goHome()">←</button>
+    <span class="step-indicator" id="echoTitle">🎧 第三关 · 接唱后半句</span>
+    <div class="fragments-mini" id="fragMini3"></div>
+  </div>
+  <div class="animal-display" id="animalDisplay3">
+    <img id="animalImg3" src="" alt="">
+    <div class="animal-label" id="animalLabel3">听前半句，接唱后半句</div>
+  </div>
+  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:8px;" id="echoHint">🎧 仔细听，音乐停了就轮到你唱！</p>
+  <div class="record-section">
+    <button class="btn-record" id="btnRecord3" onclick="toggleRecord3()">🎤</button>
+    <div class="record-hint" id="recordHint3">播放后自动开始录音</div>
+    <div class="record-timer" id="recordTimer3"></div>
+  </div>
+  <button class="btn-action btn-primary" id="btnPlay3" onclick="togglePlay3()">▶ 播放接唱音乐</button>
+  <button class="btn-action btn-gold" id="btnDoneEcho" onclick="finishStep3()" style="display:none;">完成接唱，领取碎片 ✓</button>
+</div>
+
+<!-- ===== Step 4: 唱整首 ===== -->
+<div id="page-full" class="page">
+  <div class="step-header">
+    <button class="btn-back" onclick="goHome()">←</button>
+    <span class="step-indicator">🌟 第四关 · 唱整首</span>
+    <div class="fragments-mini" id="fragMini4"></div>
+  </div>
+  <div class="animal-display">
+    <img src="images/phone/狮子.jpg" alt="" style="width:100%;height:100%;object-fit:cover;">
+    <div class="animal-label">🎤 完整演唱《齐齐望过去》</div>
+  </div>
+  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:8px;">选择演唱模式：</p>
+  <div class="mode-choose">
+    <div class="mode-btn selected" id="modeOriginal" onclick="selectMode('original')">🎵 跟唱原曲</div>
+    <div class="mode-btn" id="modeAccompany" onclick="selectMode('accompany')">🎹 伴奏演唱</div>
+  </div>
+  <div class="record-section">
+    <button class="btn-record" id="btnRecord4" onclick="toggleRecord4()">🎤</button>
+    <div class="record-hint" id="recordHint4">点按录音，完整演唱</div>
+    <div class="record-timer" id="recordTimer4"></div>
+  </div>
+  <button class="btn-action btn-primary" id="btnPlay4" onclick="togglePlay4()">▶ 播放音乐</button>
+  <button class="btn-action btn-gold" id="btnDoneFull" onclick="finishStep4()" style="display:none;">完成演唱，领取碎片 ✓</button>
+</div>
+
+<!-- ===== Badge Page ===== -->
 <div id="page-badge" class="page">
-  <div class="badge-container">
-    <div class="badge-canvas-wrap">
-      <canvas id="badgeCanvas" width="400" height="400"></canvas>
-    </div>
-    <div class="badge-title">🎖 岭南歌唱达人 🎖</div>
-    <div class="badge-subtitle">恭喜你学会了《齐齐望过去》！</div>
-    <button class="btn-restart" onclick="restart()">再唱一次</button>
-    <button class="btn-save" onclick="saveBadge()">保存徽章</button>
+  <div class="badge-bg"></div>
+  <div class="badge-inner">
+    <img class="badge-img" src="images/badge.jpg" alt="岭南小歌星徽章" id="badgeFinal">
+    <div class="badge-name">🎖 岭南小歌星 🎖</div>
+    <div class="badge-desc">恭喜你完成了《齐齐望过去》所有挑战！</div>
+    <button class="btn-action btn-gold" onclick="restartAll()" style="font-size:18px;padding:14px 40px;">再玩一次</button>
+    <button class="btn-action btn-outline" onclick="saveBadge()" style="margin-top:8px;">保存徽章图片</button>
   </div>
   <div class="confetti-wrap" id="confettiWrap"></div>
 </div>
 
 <script>
-// ===== State =====
-let currentLine = 0;
-let fragments = [false, false, false, false];
-let isRecording = false;
-let recognition = null;
-let voiceMode = true; // true=voice, false=manual tap
-let retryCount = 0;
-
-const lyrics = [
-  { text: '齐齐望过去，清溪里有只青蛙想跳水', animal: '🐸', name: '青蛙',
-    keywords: ['齐齐望过去','清溪','青蛙','跳水'] },
-  { text: '齐齐望过去，小屋里有只猪仔真风趣', animal: '🐷', name: '猪仔',
-    keywords: ['齐齐望过去','小屋','猪仔','风趣'] },
-  { text: '有只鹩哥，吱吱喳喳想驳嘴', animal: '🐦', name: '鹩哥',
-    keywords: ['鹩哥','吱吱喳喳','驳嘴'] },
-  { text: '齐齐望过去，山窿里有只狮子竟饮醉', animal: '🦁', name: '狮子',
-    keywords: ['齐齐望过去','山窿','狮子','饮醉'] },
+// ===== DATA =====
+const vocabList = [
+  { word:'望过去', img:'images/vocab/望过去.png' },
+  { word:'清溪',   img:'images/vocab/清溪.png' },
+  { word:'青蛙',   img:'images/vocab/青蛙.png' },
+  { word:'小屋',   img:'images/vocab/小屋.png' },
+  { word:'猪仔',   img:'images/vocab/猪仔.png' },
+  { word:'鹩哥',   img:'images/vocab/鹩哥.png' },
+  { word:'驳嘴',   img:'images/vocab/驳嘴.png' },
+  { word:'山窿',   img:'images/vocab/山窿.png' },
+  { word:'狮子',   img:'images/vocab/狮子.png' },
 ];
 
-// Page transition helpers
+const lyricLines = [
+  { text:'齐齐望过去，清溪里有只青蛙想跳水', animal:'青蛙', img:'images/phone/青蛙.jpg' },
+  { text:'齐齐望过去，小屋里有只猪仔真风趣', animal:'猪仔', img:'images/phone/猪仔.jpg' },
+  { text:'有只鹩哥，吱吱喳喳想驳嘴',          animal:'鹩哥', img:'images/phone/鹩哥.jpg' },
+  { text:'齐齐望过去，山窿里有只狮子竟饮醉', animal:'狮子', img:'images/phone/狮子.jpg' },
+];
+
+// Approximate lyric timestamps in full song (seconds)
+const lyricTimes = [0, 14, 28, 42];
+
+// ===== STATE =====
+let fragments = [false, false, false, false]; // 4 step fragments
+let currentVocab = 0;
+let vocabRecorded = new Array(9).fill(false);
+let echoRound = 0; // 0 = sing back half, 1 = sing front half
+let fullSongMode = 'original'; // 'original' | 'accompany'
+
+// Audio & Recording
+let currentAudio = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingForStep = null; // 'read','sing','echo','full'
+let recordTimerInterval = null;
+let recordSeconds = 0;
+
+// ===== HELPERS =====
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-// ===== Welcome Page =====
-function startSinging() {
-  currentLine = 0;
-  fragments = [false, false, false, false];
-  retryCount = 0;
-  stopRecording();
-  recognition = null;
-  updateSingUI();
-  showPage('page-sing');
-  if (voiceMode) initSpeechRecognition();
+function updateAllFragments() {
+  for (let s = 1; s <= 4; s++) {
+    const row = document.getElementById('fragMini' + s);
+    if (!row) continue;
+    row.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const d = document.createElement('span');
+      d.className = 'frag-mini' + (fragments[i] ? ' got' : '');
+      d.textContent = fragments[i] ? ['📖','🎵','🎧','🌟'][i] : '';
+      row.appendChild(d);
+    }
+  }
+  // Welcome page dots
+  const dots = document.querySelectorAll('#stepDots .step-dot');
+  dots.forEach((d, i) => { if (fragments[i]) d.classList.add('done'); });
 }
 
-function goBack() {
-  stopRecording();
+function stopAllAudio() {
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+}
+
+function stopAllRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  mediaRecorder = null;
+  recordedChunks = [];
+  if (recordTimerInterval) { clearInterval(recordTimerInterval); recordTimerInterval = null; }
+  recordSeconds = 0;
+}
+
+function startRecording(stepName) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('你的浏览器不支持录音功能，请使用 Chrome 或 Safari 打开。');
+    return false;
+  }
+  stopAllRecording();
+  recordedChunks = [];
+  recordSeconds = 0;
+  recordingForStep = stepName;
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (recordTimerInterval) { clearInterval(recordTimerInterval); recordTimerInterval = null; }
+    };
+    mediaRecorder.start();
+    recordTimerInterval = setInterval(() => {
+      recordSeconds++;
+      updateRecordTimerDisplay();
+    }, 1000);
+    updateRecordUI(true);
+  }).catch(err => {
+    console.error('Mic error:', err);
+    alert('无法访问麦克风，请检查权限设置。');
+  });
+  return true;
+}
+
+function stopRecordingAndSave() {
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') return null;
+  return new Promise(resolve => {
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      resolve({ blob, url });
+    };
+    mediaRecorder.stop();
+  });
+}
+
+function updateRecordUI(isRec) {
+  const btnId = 'btnRecord' + ({read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep]||'1');
+  const hintId = 'recordHint' + ({read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep]||'1');
+  const btn = document.getElementById(btnId);
+  const hint = document.getElementById(hintId);
+  if (btn) { btn.classList.toggle('recording', isRec); btn.textContent = isRec ? '⏹' : '🎤'; }
+  if (hint) { hint.textContent = isRec ? '正在录音中...' : '点按开始录音'; }
+}
+
+function updateRecordTimerDisplay() {
+  const timerId = 'recordTimer' + ({read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep]||'1');
+  const el = document.getElementById(timerId);
+  if (el) {
+    const m = Math.floor(recordSeconds / 60);
+    const s = recordSeconds % 60;
+    el.textContent = '⏱ ' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+}
+
+// ===== NAVIGATION =====
+function goHome() {
+  stopAllAudio();
+  stopAllRecording();
+  updateRecordUI(false);
   showPage('page-welcome');
+  updateAllFragments();
 }
 
-// ===== Sing Page UI =====
-function updateSingUI() {
-  document.getElementById('progressBar').style.width = (currentLine / 4 * 100) + '%';
-  document.getElementById('progressText').textContent = currentLine + '/4';
-
-  if (currentLine < 4) {
-    const ly = lyrics[currentLine];
-    document.getElementById('lyricText').textContent = ly.text;
-    document.getElementById('lyricAnimal').textContent = ly.animal;
-    document.getElementById('lyricCard').style.background = '#fff';
-    document.getElementById('recogText').textContent = '';
-    document.getElementById('recordHint').textContent = voiceMode ? '点按唱歌' : '点按下一句';
-    document.getElementById('btnModeToggle').textContent = voiceMode ? '切换跟唱模式' : '切换语音模式';
-    document.getElementById('btnSkip').classList.toggle('show', !voiceMode);
-    document.getElementById('btnRecord').style.display = 'inline-flex';
-  }
-  updateFragments();
+function startChallenge() {
+  fragments = [false,false,false,false];
+  currentVocab = 0;
+  vocabRecorded = new Array(9).fill(false);
+  echoRound = 0;
+  fullSongMode = 'original';
+  updateAllFragments();
+  // Go to step 1
+  showStep1();
 }
 
-function updateFragments() {
-  const row = document.getElementById('fragmentsRow');
-  row.innerHTML = '';
-  lyrics.forEach((ly, i) => {
-    const div = document.createElement('div');
-    div.className = 'fragment-slot' + (fragments[i] ? ' unlocked' : '');
-    div.innerHTML = (fragments[i] ? ly.animal : '？') +
-      '<span class="fragment-check">✓</span>';
-    row.appendChild(div);
-  });
+// ===== STEP 1: 念一念 =====
+function showStep1() {
+  showPage('page-read');
+  currentVocab = 0;
+  updateVocabUI();
+  updateAllFragments();
+  document.getElementById('btnDoneRead').style.display = 'none';
 }
 
-// ===== Speech Recognition =====
-function initSpeechRecognition() {
-  if (recognition) {
-    recognition.abort();
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    voiceMode = false;
-    updateSingUI();
-    return;
-  }
-
-  recognition = new SpeechRecognition();
-  recognition.lang = 'zh-HK';
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 3;
-
-  recognition.onresult = (event) => {
-    let interimText = '';
-    let finalTexts = [];
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      if (event.results[i].isFinal) {
-        for (let j = 0; j < event.results[i].length; j++) {
-          finalTexts.push(event.results[i][j].transcript);
-        }
-      } else {
-        interimText += event.results[i][0].transcript;
-      }
-    }
-    if (interimText) {
-      document.getElementById('recogText').textContent = '听到：' + interimText;
-    }
-    if (finalTexts.length > 0) {
-      document.getElementById('recogText').textContent = '听到：' + finalTexts[0];
-      checkLyricMatch(finalTexts);
-    }
-  };
-
-  recognition.onerror = (event) => {
-    console.log('Speech error:', event.error);
-    if (event.error === 'no-speech') {
-      document.getElementById('recogText').textContent = '未检测到声音，再试一次吧～';
-    } else if (event.error === 'network') {
-      document.getElementById('recogText').textContent = '网络问题，切换跟唱模式试试？';
-    } else {
-      document.getElementById('recogText').textContent = '嗯？再试一次吧～';
-    }
-    stopRecording();
-  };
-
-  recognition.onend = () => {
-    stopRecording();
-  };
-}
-
-function toggleRecording() {
-  if (currentLine >= 4) return;
-
-  if (!voiceMode) {
-    // Manual mode: just advance
-    onLineComplete();
-    return;
-  }
-
-  if (isRecording) {
-    stopRecording();
-  } else {
-    startRecording();
+function updateVocabUI() {
+  const v = vocabList[currentVocab];
+  document.getElementById('vocabImg').src = v.img;
+  document.getElementById('vocabWord').textContent = v.word;
+  document.getElementById('vocabCounter').textContent = (currentVocab + 1) + ' / ' + vocabList.length;
+  document.getElementById('btnPrevVocab').disabled = (currentVocab === 0);
+  document.getElementById('btnNextVocab').disabled = (currentVocab === vocabList.length - 1);
+  document.getElementById('recordHint1').textContent = vocabRecorded[currentVocab] ? '✓ 已录音' : '点按开始录音跟读';
+  // Show done button if all recorded
+  if (vocabRecorded.every(x => x)) {
+    document.getElementById('btnDoneRead').style.display = 'inline-block';
   }
 }
 
-function startRecording() {
-  if (!recognition) { initSpeechRecognition(); }
-  if (!recognition) {
-    voiceMode = false; updateSingUI(); return;
-  }
-  try {
-    recognition.start();
-    isRecording = true;
-    document.getElementById('btnRecord').classList.add('recording');
-    document.getElementById('recordHint').textContent = '正在听...';
-    document.getElementById('recogText').textContent = '';
-    retryCount = 0;
-  } catch(e) {
-    console.log('Recognition start error:', e);
-  }
-}
+function prevVocab() { if (currentVocab > 0) { currentVocab--; updateVocabUI(); } }
+function nextVocab() { if (currentVocab < vocabList.length - 1) { currentVocab++; updateVocabUI(); } }
 
-function stopRecording() {
-  if (!isRecording) return;
-  isRecording = false;
-  if (recognition) {
-    try { recognition.abort(); } catch(e) {}
-  }
-  document.getElementById('btnRecord').classList.remove('recording');
-  document.getElementById('recordHint').textContent = voiceMode ? '点按唱歌' : '点按下一句';
-}
-
-// ===== Lyrics Matching =====
-function checkLyricMatch(spokenTexts) {
-  if (currentLine >= 4) return;
-  const target = lyrics[currentLine];
-
-  // Try each alternative transcription
-  let bestRatio = 0;
-  for (const spoken of spokenTexts) {
-    const spokenClean = spoken.replace(/[，。！？、；：""''「」\s]/g, '');
-    let matchCount = 0;
-    target.keywords.forEach(kw => {
-      if (spokenClean.includes(kw)) matchCount++;
+function toggleRecord1() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecordingAndSave().then(result => {
+      vocabRecorded[currentVocab] = true;
+      updateVocabUI();
+      updateRecordUI(false);
     });
-    const ratio = matchCount / target.keywords.length;
-    if (ratio > bestRatio) bestRatio = ratio;
-  }
-
-  if (bestRatio >= 0.5) {
-    document.getElementById('lyricCard').style.background = '#E8F5E9';
-    document.getElementById('recogText').textContent = '太棒了！✓';
-    setTimeout(() => onLineComplete(), 600);
   } else {
-    retryCount++;
-    if (retryCount >= 3) {
-      document.getElementById('recogText').textContent = '没关系，再试试～或者切换跟唱模式';
-      document.getElementById('btnSkip').classList.add('show');
-    } else {
-      document.getElementById('recogText').textContent = '差一点点，再试一次吧～（' + retryCount + '/3）';
-    }
+    startRecording('read');
   }
 }
 
-// ===== Line Completion =====
-function playDing() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.35);
-  } catch(e) {}
+function finishStep1() {
+  stopAllRecording();
+  updateRecordUI(false);
+  fragments[0] = true;
+  updateAllFragments();
+  showStep2();
 }
 
-function onLineComplete() {
-  stopRecording();
-  playDing();
-  fragments[currentLine] = true;
-  updateFragments();
-  currentLine++;
-  retryCount = 0;
-  document.getElementById('btnSkip').classList.remove('show');
-
-  if (currentLine >= 4) {
-    setTimeout(() => showBadge(), 800);
-  } else {
-    updateSingUI();
-    if (voiceMode) initSpeechRecognition();
-  }
-}
-
-function skipLine() {
-  if (!isRecording && !voiceMode) {
-    onLineComplete();
-  } else {
-    // Force pass
-    stopRecording();
-    onLineComplete();
-  }
-}
-
-function toggleMode() {
-  voiceMode = !voiceMode;
-  stopRecording();
-  retryCount = 0;
-  document.getElementById('btnSkip').classList.remove('show');
-  updateSingUI();
-}
-
-// ===== Badge Drawing =====
-function drawBadge() {
-  const canvas = document.getElementById('badgeCanvas');
-  const ctx = canvas.getContext('2d');
-  const w = 400, h = 400;
-  const cx = w / 2, cy = h / 2;
-  ctx.clearRect(0, 0, w, h);
-
-  // --- Outer glow ---
-  const glowGrad = ctx.createRadialGradient(cx, cy, 140, cx, cy, 200);
-  glowGrad.addColorStop(0, 'rgba(212,168,67,0.3)');
-  glowGrad.addColorStop(1, 'rgba(212,168,67,0)');
-  ctx.fillStyle = glowGrad;
-  ctx.beginPath(); ctx.arc(cx, cy, 200, 0, Math.PI*2); ctx.fill();
-
-  // --- 镬耳墙 outer border ---
-  drawWokEarRing(ctx, cx, cy, 170, 18);
-
-  // --- Gold ring ---
-  ctx.beginPath();
-  ctx.arc(cx, cy, 155, 0, Math.PI * 2);
-  ctx.fillStyle = '#D4A843';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(cx, cy, 148, 0, Math.PI * 2);
-  ctx.fillStyle = '#C4963A';
-  ctx.fill();
-
-  // --- Inner cream background ---
-  const innerGrad = ctx.createRadialGradient(cx, cy-20, 10, cx, cy, 145);
-  innerGrad.addColorStop(0, '#FFFFFF');
-  innerGrad.addColorStop(1, '#FFF4E0');
-  ctx.beginPath();
-  ctx.arc(cx, cy, 145, 0, Math.PI * 2);
-  ctx.fillStyle = innerGrad;
-  ctx.fill();
-
-  // --- Dot border (inner ring decoration) ---
-  ctx.fillStyle = '#D4A843';
-  for (let i = 0; i < 60; i++) {
-    const a = (i / 60) * Math.PI * 2 - Math.PI / 2;
-    const dx = cx + 142 * Math.cos(a);
-    const dy = cy + 142 * Math.sin(a);
-    ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI * 2); ctx.fill();
-  }
-
-  // --- 木棉花 (Kapok) at top ---
-  drawKapok(ctx, cx, cy - 95, 28);  // top
-  drawKapok(ctx, cx - 105, cy + 10, 18); // left
-  drawKapok(ctx, cx + 105, cy + 10, 18); // right
-
-  // --- 舞狮 face (center) ---
-  drawLionDance(ctx, cx, cy + 15, 90);
-
-  // --- Arc text ---
-  drawArcText(ctx, '嶺南歌唱達人', cx, cy + 15, 118, '#C41E3A', 'bold 22px "PingFang SC","Microsoft YaHei","Noto Sans HK",sans-serif');
-
-  // --- Small stars ---
-  ctx.fillStyle = '#FFD700';
-  for (let i = 0; i < 12; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const r = 20 + Math.random() * 130;
-    const sx = cx + r * Math.cos(a);
-    const sy = cy + r * Math.sin(a);
-    drawStar(ctx, sx, sy, 3 + Math.random() * 3, 5);
-  }
-
-  // --- Below-badge text ---
-  ctx.fillStyle = '#C41E3A';
-  ctx.font = 'bold 16px "PingFang SC","Microsoft YaHei","Noto Sans HK",sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('齐齐望过去', cx, cy + 170);
-  ctx.fillStyle = '#888';
-  ctx.font = '12px "PingFang SC","Microsoft YaHei","Noto Sans HK",sans-serif';
-  ctx.fillText('粤语童谣 · 完整演唱', cx, cy + 188);
-}
-
-function drawWokEarRing(ctx, cx, cy, r, count) {
-  const archW = (2 * Math.PI) / count;
-  ctx.beginPath();
-  for (let i = 0; i < count; i++) {
-    const a0 = i * archW - Math.PI / 2;
-    const a1 = a0 + archW;
-    const am = (a0 + a1) / 2;
-    const sx = cx + r * Math.cos(a0);
-    const sy = cy + r * Math.sin(a0);
-    const peakR = r + 14;
-    const px = cx + peakR * Math.cos(am);
-    const py = cy + peakR * Math.sin(am);
-    const ex = cx + r * Math.cos(a1);
-    const ey = cy + r * Math.sin(a1);
-    const cpR = r - 4;
-    const cp1x = cx + cpR * Math.cos(a0 + archW * 0.25);
-    const cp1y = cy + cpR * Math.sin(a0 + archW * 0.25);
-    const cp2x = cx + cpR * Math.cos(a1 - archW * 0.25);
-    const cp2y = cy + cpR * Math.sin(a1 - archW * 0.25);
-
-    if (i === 0) ctx.moveTo(sx, sy);
-    ctx.bezierCurveTo(cp1x, cp1y, px, py, px, py);
-    ctx.bezierCurveTo(px, py, cp2x, cp2y, ex, ey);
-  }
-  ctx.closePath();
-  ctx.fillStyle = '#B71C1C';
-  ctx.fill();
-  ctx.strokeStyle = '#8B0000';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Inner highlight on each arch
-  ctx.beginPath();
-  for (let i = 0; i < count; i++) {
-    const a0 = i * archW - Math.PI / 2;
-    const a1 = a0 + archW;
-    const am = (a0 + a1) / 2;
-    const innerR = r + 3;
-    const sx = cx + innerR * Math.cos(a0);
-    const sy = cy + innerR * Math.sin(a0);
-    const peakR = innerR + 8;
-    const px = cx + peakR * Math.cos(am);
-    const py = cy + peakR * Math.sin(am);
-    const ex = cx + innerR * Math.cos(a1);
-    const ey = cy + innerR * Math.sin(a1);
-    if (i === 0) ctx.moveTo(sx, sy);
-    ctx.quadraticCurveTo(px, py, ex, ey);
-  }
-  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-}
-
-function drawKapok(ctx, cx, cy, size) {
-  for (let i = 0; i < 5; i++) {
-    const a = (i * 72 - 90) * Math.PI / 180;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(a);
-
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(-size*0.35, -size*0.4, -size*0.3, -size*0.85, 0, -size);
-    ctx.bezierCurveTo(size*0.3, -size*0.85, size*0.35, -size*0.4, 0, 0);
-    const petalGrad = ctx.createLinearGradient(0, 0, 0, -size);
-    petalGrad.addColorStop(0, '#FF5252');
-    petalGrad.addColorStop(1, '#C41E3A');
-    ctx.fillStyle = petalGrad;
-    ctx.fill();
-    ctx.restore();
-  }
-  // Stamens
-  ctx.fillStyle = '#FFD54F';
-  for (let i = 0; i < 8; i++) {
-    const a = (i * 45) * Math.PI / 180;
-    const sx = cx + 1.5 * Math.cos(a);
-    const sy = cy + 1.5 * Math.sin(a);
-    ctx.beginPath(); ctx.arc(sx, sy, 1.8, 0, Math.PI*2); ctx.fill();
-  }
-  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#FF8F00'; ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2); ctx.fill();
-}
-
-function drawLionDance(ctx, cx, cy, size) {
-  // Fur trim ring
-  const furColors = ['#FFD54F','#FFB74D','#FF8A65','#EF5350','#FFD54F','#FFB74D'];
-  for (let i = 0; i < 36; i++) {
-    const a = (i / 36) * Math.PI * 2;
-    const r = size * 0.45 + Math.random() * size * 0.15;
-    const fx = cx + r * Math.cos(a);
-    const fy = cy + r * Math.sin(a);
-    ctx.fillStyle = furColors[Math.floor(Math.random() * furColors.length)];
-    ctx.beginPath(); ctx.arc(fx, fy, 5 + Math.random()*4, 0, Math.PI*2); ctx.fill();
-  }
-
-  // Main face disc
-  const faceGrad = ctx.createRadialGradient(cx, cy-5, size*0.05, cx, cy, size*0.42);
-  faceGrad.addColorStop(0, '#FFE0B2');
-  faceGrad.addColorStop(1, '#FFCC80');
-  ctx.beginPath(); ctx.arc(cx, cy, size*0.4, 0, Math.PI*2);
-  ctx.fillStyle = faceGrad; ctx.fill();
-  ctx.strokeStyle = '#E65100'; ctx.lineWidth = 2.5; ctx.stroke();
-
-  // Ears
-  drawLionEar(ctx, cx - size*0.32, cy - size*0.18, size*0.16);
-  drawLionEar(ctx, cx + size*0.32, cy - size*0.18, size*0.16);
-
-  // Eye whites
-  const eyeY = cy - size*0.1;
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath(); ctx.ellipse(cx - size*0.16, eyeY, size*0.11, size*0.13, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx + size*0.16, eyeY, size*0.11, size*0.13, 0, 0, Math.PI*2); ctx.fill();
-
-  // Pupils (big cute)
-  ctx.fillStyle = '#1A1A1A';
-  ctx.beginPath(); ctx.arc(cx - size*0.14, eyeY, size*0.07, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(cx + size*0.14, eyeY, size*0.07, 0, Math.PI*2); ctx.fill();
-
-  // Eye highlights
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath(); ctx.arc(cx - size*0.17, eyeY - size*0.03, size*0.03, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(cx + size*0.13, eyeY - size*0.03, size*0.03, 0, Math.PI*2); ctx.fill();
-
-  // Eyebrows
-  ctx.strokeStyle = '#5D4037';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(cx - size*0.28, eyeY - size*0.15);
-  ctx.quadraticCurveTo(cx - size*0.16, eyeY - size*0.22, cx - size*0.04, eyeY - size*0.1);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(cx + size*0.28, eyeY - size*0.15);
-  ctx.quadraticCurveTo(cx + size*0.16, eyeY - size*0.22, cx + size*0.04, eyeY - size*0.1);
-  ctx.stroke();
-
-  // Nose (cute triangle)
-  ctx.fillStyle = '#4E342E';
-  ctx.beginPath();
-  ctx.moveTo(cx - size*0.05, cy + size*0.03);
-  ctx.lineTo(cx + size*0.05, cy + size*0.03);
-  ctx.lineTo(cx, cy + size*0.09);
-  ctx.closePath();
-  ctx.fill();
-
-  // Mouth (smile)
-  ctx.strokeStyle = '#5D4037';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.arc(cx, cy + size*0.05, size*0.1, 0.15, Math.PI - 0.15);
-  ctx.stroke();
-
-  // Cheek blush
-  ctx.fillStyle = 'rgba(255,140,140,0.35)';
-  ctx.beginPath(); ctx.ellipse(cx - size*0.26, cy + size*0.1, size*0.07, size*0.05, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx + size*0.26, cy + size*0.1, size*0.07, size*0.05, 0, 0, Math.PI*2); ctx.fill();
-
-  // Microphone below face
-  const micY = cy + size*0.45;
-  ctx.fillStyle = '#424242';
-  ctx.beginPath(); ctx.arc(cx, micY - 6, 10, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#757575';
-  ctx.fillRect(cx - 3, micY - 6, 6, 18);
-  ctx.fillStyle = '#424242';
-  ctx.fillRect(cx - 5, micY + 10, 10, 4);
-
-  // Mic sparkles
-  ctx.fillStyle = '#FFD700';
-  drawStar(ctx, cx - 14, micY - 12, 3, 4);
-  drawStar(ctx, cx + 12, micY - 10, 2.5, 4);
-  drawStar(ctx, cx, micY - 18, 3.5, 4);
-}
-
-function drawLionEar(ctx, cx, cy, size) {
-  ctx.beginPath();
-  ctx.arc(cx, cy, size, 0, Math.PI*2);
-  const earGrad = ctx.createRadialGradient(cx, cy, size*0.2, cx, cy, size);
-  earGrad.addColorStop(0, '#FFCC80');
-  earGrad.addColorStop(1, '#F57C00');
-  ctx.fillStyle = earGrad; ctx.fill();
-  ctx.strokeStyle = '#E65100'; ctx.lineWidth = 2; ctx.stroke();
-}
-
-function drawStar(ctx, cx, cy, r, points) {
-  const step = Math.PI / points;
-  let rot = -Math.PI / 2;
-  ctx.beginPath();
-  for (let i = 0; i < points * 2; i++) {
-    const cr = i % 2 === 0 ? r : r * 0.4;
-    const x = cx + cr * Math.cos(rot);
-    const y = cy + cr * Math.sin(rot);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    rot += step;
-  }
-  ctx.closePath(); ctx.fill();
-}
-
-function drawArcText(ctx, text, cx, cy, radius, color, font) {
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.font = font;
-  const chars = text.split('');
-  const totalAngle = (chars.length - 1) * 0.22;
-  const startAngle = -Math.PI / 2 - totalAngle / 2;
-
-  chars.forEach((ch, i) => {
-    const a = startAngle + i * 0.22;
-    const x = cx + radius * Math.cos(a);
-    const y = cy + radius * Math.sin(a);
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(a + Math.PI / 2);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(ch, 0, 0);
-    ctx.restore();
+// ===== STEP 2: 跟唱歌词 =====
+function showStep2() {
+  showPage('page-sing');
+  updateAllFragments();
+  document.getElementById('btnDoneSing').style.display = 'none';
+  // Build lyric dots
+  const dots = document.getElementById('lyricDots');
+  dots.innerHTML = '';
+  lyricLines.forEach((l, i) => {
+    const d = document.createElement('span');
+    d.className = 'lyric-dot'; d.textContent = l.animal; d.id = 'lyricDot' + i;
+    dots.appendChild(d);
   });
-  ctx.restore();
+  // Show first animal
+  updateAnimalDisplay2(0);
 }
 
-// ===== Badge Page =====
+function updateAnimalDisplay2(idx) {
+  const l = lyricLines[Math.min(idx, 3)];
+  document.getElementById('animalImg2').src = l.img;
+  document.getElementById('animalLabel2').textContent = l.text;
+  document.querySelectorAll('.lyric-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === idx);
+    if (i < idx) d.style.background = 'var(--green)'; else if (i > idx) d.style.background = '#f0f0f0';
+  });
+}
+
+function togglePlay2() {
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    document.getElementById('btnPlay2').textContent = '▶ 继续播放';
+    return;
+  }
+  if (currentAudio && currentAudio.paused) {
+    currentAudio.play();
+    document.getElementById('btnPlay2').textContent = '⏸ 暂停';
+    return;
+  }
+  stopAllAudio();
+  currentAudio = new Audio('audio/full.mp3');
+  let lastIdx = -1;
+  currentAudio.ontimeupdate = () => {
+    const t = currentAudio.currentTime;
+    let idx = 0;
+    for (let i = lyricTimes.length - 1; i >= 0; i--) {
+      if (t >= lyricTimes[i]) { idx = i; break; }
+    }
+    if (idx !== lastIdx) { lastIdx = idx; updateAnimalDisplay2(idx); }
+  };
+  currentAudio.onended = () => {
+    updateAnimalDisplay2(3);
+    document.getElementById('btnPlay2').textContent = '▶ 重新播放';
+    currentAudio = null;
+    document.getElementById('btnDoneSing').style.display = 'inline-block';
+  };
+  currentAudio.play();
+  document.getElementById('btnPlay2').textContent = '⏸ 暂停';
+}
+
+function toggleRecord2() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecordingAndSave().then(() => {
+      updateRecordUI(false);
+      document.getElementById('btnDoneSing').style.display = 'inline-block';
+    });
+  } else {
+    startRecording('sing');
+  }
+}
+
+function finishStep2() {
+  stopAllAudio();
+  stopAllRecording();
+  updateRecordUI(false);
+  fragments[1] = true;
+  updateAllFragments();
+  showStep3();
+}
+
+// ===== STEP 3: 接唱 =====
+function showStep3() {
+  showPage('page-echo');
+  updateAllFragments();
+  echoRound = 0;
+  document.getElementById('btnDoneEcho').style.display = 'none';
+  document.getElementById('btnPlay3').style.display = 'inline-block';
+  updateEchoUI();
+}
+
+function updateEchoUI() {
+  if (echoRound === 0) {
+    document.getElementById('echoTitle').textContent = '🎧 第三关 · 接唱后半句';
+    document.getElementById('animalLabel3').textContent = '🎧 听前半句，你来接唱后半句';
+    document.getElementById('echoHint').textContent = '仔细听前半句，音乐停了就轮到你唱后半句！';
+  } else {
+    document.getElementById('echoTitle').textContent = '🎧 第三关 · 接唱前半句';
+    document.getElementById('animalLabel3').textContent = '🎧 听后半句，你来接唱前半句';
+    document.getElementById('echoHint').textContent = '仔细听后半句，音乐停了就轮到你唱前半句！';
+  }
+  document.getElementById('animalImg3').src = 'images/phone/鹩哥.jpg';
+}
+
+function togglePlay3() {
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    document.getElementById('btnPlay3').textContent = '▶ 继续播放';
+    return;
+  }
+  if (currentAudio && currentAudio.paused) {
+    currentAudio.play();
+    document.getElementById('btnPlay3').textContent = '⏸ 暂停';
+    return;
+  }
+  stopAllAudio();
+  const audioFile = echoRound === 0 ? 'audio/echo-back.mp3' : 'audio/echo-front.mp3';
+  currentAudio = new Audio(audioFile);
+  currentAudio.onended = () => {
+    document.getElementById('btnPlay3').textContent = '▶ 重新播放';
+    currentAudio = null;
+    document.getElementById('btnDoneEcho').style.display = 'inline-block';
+  };
+  currentAudio.play();
+  document.getElementById('btnPlay3').textContent = '⏸ 暂停';
+}
+
+function toggleRecord3() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecordingAndSave().then(() => {
+      updateRecordUI(false);
+      document.getElementById('btnDoneEcho').style.display = 'inline-block';
+    });
+  } else {
+    startRecording('echo');
+  }
+}
+
+function finishStep3() {
+  stopAllAudio();
+  stopAllRecording();
+  updateRecordUI(false);
+  if (echoRound === 0) {
+    // First round done, go to second round
+    echoRound = 1;
+    updateEchoUI();
+    document.getElementById('btnDoneEcho').style.display = 'none';
+    document.getElementById('btnPlay3').textContent = '▶ 播放接唱音乐';
+  } else {
+    fragments[2] = true;
+    updateAllFragments();
+    showStep4();
+  }
+}
+
+// ===== STEP 4: 演唱整首 =====
+function showStep4() {
+  showPage('page-full');
+  updateAllFragments();
+  document.getElementById('btnDoneFull').style.display = 'none';
+  document.getElementById('btnPlay4').textContent = '▶ 播放音乐';
+  fullSongMode = 'original';
+  document.getElementById('modeOriginal').classList.add('selected');
+  document.getElementById('modeAccompany').classList.remove('selected');
+}
+
+function selectMode(mode) {
+  fullSongMode = mode;
+  document.getElementById('modeOriginal').classList.toggle('selected', mode === 'original');
+  document.getElementById('modeAccompany').classList.toggle('selected', mode === 'accompany');
+  stopAllAudio();
+  document.getElementById('btnPlay4').textContent = '▶ 播放音乐';
+}
+
+function togglePlay4() {
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    document.getElementById('btnPlay4').textContent = '▶ 继续播放';
+    return;
+  }
+  if (currentAudio && currentAudio.paused) {
+    currentAudio.play();
+    document.getElementById('btnPlay4').textContent = '⏸ 暂停';
+    return;
+  }
+  stopAllAudio();
+  const audioFile = fullSongMode === 'original' ? 'audio/full.mp3' : 'audio/accompany.mp3';
+  currentAudio = new Audio(audioFile);
+  currentAudio.onended = () => {
+    document.getElementById('btnPlay4').textContent = '▶ 重新播放';
+    currentAudio = null;
+    document.getElementById('btnDoneFull').style.display = 'inline-block';
+  };
+  currentAudio.play();
+  document.getElementById('btnPlay4').textContent = '⏸ 暂停';
+}
+
+function toggleRecord4() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecordingAndSave().then(() => {
+      updateRecordUI(false);
+      document.getElementById('btnDoneFull').style.display = 'inline-block';
+    });
+  } else {
+    startRecording('full');
+  }
+}
+
+function finishStep4() {
+  stopAllAudio();
+  stopAllRecording();
+  updateRecordUI(false);
+  fragments[3] = true;
+  updateAllFragments();
+  showBadge();
+}
+
+// ===== BADGE =====
 function showBadge() {
   showPage('page-badge');
-  setTimeout(() => {
-    drawBadge();
-    spawnConfetti();
-  }, 200);
+  updateAllFragments();
+  spawnConfetti();
 }
 
 function spawnConfetti() {
   const wrap = document.getElementById('confettiWrap');
   wrap.innerHTML = '';
   const colors = ['#C41E3A','#D4A843','#5B8C5A','#FFAB91','#5B9BD5','#F4A460','#E63946','#FFD700'];
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 80; i++) {
     const el = document.createElement('div');
     el.className = 'confetti';
     el.style.left = Math.random() * 100 + '%';
@@ -870,33 +720,24 @@ function spawnConfetti() {
 }
 
 function saveBadge() {
-  const canvas = document.getElementById('badgeCanvas');
   const link = document.createElement('a');
-  link.download = '岭南歌唱达人徽章.png';
-  link.href = canvas.toDataURL('image/png');
+  link.download = '岭南小歌星徽章.png';
+  link.href = document.getElementById('badgeFinal').src;
   link.click();
 }
 
-function restart() {
-  currentLine = 0;
-  fragments = [false, false, false, false];
-  retryCount = 0;
-  stopRecording();
-  recognition = null;
-  updateSingUI();
-  showPage('page-sing');
-  if (voiceMode) initSpeechRecognition();
+function restartAll() {
+  fragments = [false,false,false,false];
+  vocabRecorded = new Array(9).fill(false);
+  echoRound = 0;
+  stopAllAudio();
+  stopAllRecording();
+  showPage('page-welcome');
+  updateAllFragments();
 }
 
-// ===== QR Code (generated on load) =====
-window.addEventListener('DOMContentLoaded', () => {
-  const url = encodeURIComponent(window.location.href);
-  const qrImg = document.getElementById('qrImg');
-  if (qrImg && !window.location.href.startsWith('file://')) {
-    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + url;
-    document.getElementById('qrSection').style.display = 'block';
-  }
-});
+// ===== INIT =====
+updateAllFragments();
 </script>
 </body>
 </html>
