@@ -228,7 +228,7 @@ body {
 <div id="page-read" class="page">
   <div class="step-header">
     <button class="btn-back" onclick="goHome()">←</button>
-    <span class="step-indicator">📖 第一关 · 念一念</span>
+    <span class="step-indicator">📖 第一关 · 读一读</span>
     <div class="fragments-mini" id="fragMini1"></div>
   </div>
   <div class="vocab-card" id="vocabCard">
@@ -246,14 +246,14 @@ body {
     <div class="record-timer" id="recordTimer1"></div>
     <div id="playback1" style="margin-top:6px;"></div>
   </div>
-  <button class="btn-action btn-gold" id="btnDoneRead" onclick="finishStep1()" style="display:none;">完成念一念，领取碎片 ✓</button>
+  <button class="btn-action btn-gold" id="btnDoneRead" onclick="finishStep1()" style="display:none;">完成读一读，领取碎片 ✓</button>
 </div>
 
 <!-- ===== Step 2: 跟唱歌词 ===== -->
 <div id="page-sing" class="page">
   <div class="step-header">
     <button class="btn-back" onclick="goHome()">←</button>
-    <span class="step-indicator">🎵 第二关 · 跟唱歌词</span>
+    <span class="step-indicator">🎵 第二关 · 跟唱歌曲</span>
     <div class="fragments-mini" id="fragMini2"></div>
   </div>
   <div class="lyric-mini" id="lyricDots"></div>
@@ -297,7 +297,7 @@ body {
 <div id="page-full" class="page">
   <div class="step-header">
     <button class="btn-back" onclick="goHome()">←</button>
-    <span class="step-indicator">🌟 第四关 · 唱整首</span>
+    <span class="step-indicator">🌟 第四关 · 完整演唱</span>
     <div class="fragments-mini" id="fragMini4"></div>
   </div>
   <div class="animal-display" id="animalDisplay4">
@@ -364,7 +364,6 @@ const lyricLines = [
 
 // Lyric timestamps in full song (seconds) - matched to actual audio
 const lyricTimes = [8, 14, 21, 27];
-const coverShowUntil = 7; // Cover image shows until 7s, then animals start at 8s
 
 // ===== STATE =====
 let fragments = [false, false, false, false]; // 4 step fragments
@@ -436,7 +435,7 @@ function updateAllFragments() {
       d.className = 'frag-mini' + (fragments[i] ? ' got' : '');
       if (fragments[i]) {
         const img = document.createElement('img');
-        img.src = fragImgs[i]; img.style.width='20px'; img.style.height='20px'; img.style.objectFit='contain';
+        img.src = fragImgs[i]; img.style.width='30px'; img.style.height='30px'; img.style.objectFit='contain';
         d.appendChild(img);
       }
       row.appendChild(d);
@@ -457,7 +456,7 @@ function showFragmentPopup(idx) {
   popup.style.boxShadow = '0 0 60px rgba(212,168,67,0.6)';
   popup.innerHTML = '';
   const img = document.createElement('img');
-  img.src = fragImgs[idx]; img.style.width='100px'; img.style.height='100px'; img.style.objectFit='contain';
+  img.src = fragImgs[idx]; img.style.width='150px'; img.style.height='150px'; img.style.objectFit='contain';
   popup.appendChild(img);
   // Re-trigger animation
   popup.style.animation = 'none';
@@ -488,29 +487,69 @@ function showBadgeAssembly() {
   const cx = window.innerWidth / 2;
   const cy = window.innerHeight / 2;
   container.innerHTML = '';
+
+  // Darken background for dramatic effect
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;transition:opacity 0.5s;';
+  container.appendChild(overlay);
+
   const starts = [
-    {x: cx - 140, y: -60},
-    {x: cx + 140, y: -60},
-    {x: cx - 140, y: window.innerHeight + 60},
-    {x: cx + 140, y: window.innerHeight + 60},
+    {x: -100, y: -100},
+    {x: window.innerWidth + 100, y: -100},
+    {x: -100, y: window.innerHeight + 100},
+    {x: window.innerWidth + 100, y: window.innerHeight + 100},
   ];
+
+  // Target positions: 4 quadrants around center
+  const targets = [
+    {x: cx - 55, y: cy - 55},
+    {x: cx + 5, y: cy - 55},
+    {x: cx - 55, y: cy + 5},
+    {x: cx + 5, y: cy + 5},
+  ];
+
+  // Phase 1: Fragments fly in from corners
   fragImgs.forEach((src, i) => {
     const el = document.createElement('img');
-    el.className = 'frag-fly';
     el.src = src;
-    el.style.width = '60px'; el.style.height = '60px'; el.style.objectFit = 'contain';
+    el.style.cssText = 'position:fixed;width:100px;height:100px;object-fit:contain;z-index:1001;transition:all 1s cubic-bezier(0.25,0.46,0.45,0.94);';
     el.style.left = starts[i].x + 'px';
     el.style.top = starts[i].y + 'px';
-    el.style.opacity = '1';
+    el.style.opacity = '0.5';
+    el.style.transform = 'rotate(180deg) scale(0.5)';
     container.appendChild(el);
+
     requestAnimationFrame(() => {
-      el.style.left = (cx - 30) + 'px';
-      el.style.top = (cy - 30) + 'px';
-      el.style.opacity = '0';
-      el.style.transform = 'scale(0.3)';
+      el.style.left = targets[i].x + 'px';
+      el.style.top = targets[i].y + 'px';
+      el.style.opacity = '1';
+      el.style.transform = 'rotate(0deg) scale(1)';
     });
   });
-  setTimeout(() => { container.innerHTML = ''; }, 1500);
+
+  // Phase 2: Fragments merge into center (after 1.2s)
+  setTimeout(() => {
+    const frags = container.querySelectorAll('img');
+    frags.forEach(el => {
+      el.style.transition = 'all 0.8s cubic-bezier(0.6,0.04,0.98,0.335)';
+      el.style.left = (cx - 50) + 'px';
+      el.style.top = (cy - 50) + 'px';
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.1)';
+    });
+
+    // Show glowing badge at center during merge
+    const glow = document.createElement('div');
+    glow.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,0.8) 0%,rgba(255,215,0,0.4) 40%,transparent 70%);z-index:1002;transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);';
+    container.appendChild(glow);
+    requestAnimationFrame(() => { glow.style.transform = 'translate(-50%,-50%) scale(1.5)'; });
+  }, 1200);
+
+  // Phase 3: Clean up and show badge page
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    container.innerHTML = '';
+  }, 2000);
 }
 
 function stopAllAudio() {
@@ -664,7 +703,7 @@ function showStep1() {
   currentVocab = 0;
   // Show cover image before vocab starts
   document.getElementById('vocabImg').src = 'images/cover/step1.png';
-  document.getElementById('vocabWord').textContent = '📖 第一关 · 念一念';
+  document.getElementById('vocabWord').textContent = '📖 第一关 · 读一读';
   document.getElementById('vocabCounter').textContent = '跟读重点词汇';
   updateAllFragments();
   document.getElementById('btnDoneRead').style.display = 'none';
@@ -729,7 +768,7 @@ function showStep2() {
   });
   // Show cover image initially
   document.getElementById('animalImg2').src = 'images/cover/step2.png';
-  document.getElementById('animalLabel2').textContent = '🎵 第二关 · 跟唱歌词';
+  document.getElementById('animalLabel2').textContent = '🎵 第二关 · 跟唱歌曲';
 }
 
 function updateAnimalDisplay2(idx) {
@@ -758,12 +797,12 @@ function togglePlay2() {
   let lastIdx = -1;
   // Show cover first
   document.getElementById('animalImg2').src = 'images/cover/step2.png';
-  document.getElementById('animalLabel2').textContent = '🎵 第二关 · 跟唱歌词';
+  document.getElementById('animalLabel2').textContent = '🎵 第二关 · 跟唱歌曲';
   document.querySelectorAll('.lyric-dot').forEach(d => d.classList.remove('active'));
   currentAudio.ontimeupdate = () => {
     const t = currentAudio.currentTime;
-    if (t < coverShowUntil) {
-      if (lastIdx !== -1) { lastIdx = -1; document.getElementById('animalImg2').src = 'images/cover/step2.png'; document.getElementById('animalLabel2').textContent = '🎵 第二关 · 跟唱歌词'; document.querySelectorAll('.lyric-dot').forEach(d => d.classList.remove('active')); }
+    if (t < lyricTimes[0]) {
+      if (lastIdx !== -1) { lastIdx = -1; document.getElementById('animalImg2').src = 'images/cover/step2.png'; document.getElementById('animalLabel2').textContent = '🎵 第二关 · 跟唱歌曲'; document.querySelectorAll('.lyric-dot').forEach(d => d.classList.remove('active')); }
       return;
     }
     let idx = 0;
@@ -850,7 +889,7 @@ function togglePlay3() {
   document.getElementById('animalLabel3').textContent = '🎧 第三关 · 接唱挑战';
   currentAudio.ontimeupdate = () => {
     const t = currentAudio.currentTime;
-    if (t < coverShowUntil) {
+    if (t < lyricTimes[0]) {
       if (lastIdx !== -1) { lastIdx = -1; document.getElementById('animalImg3').src = 'images/cover/step3.png'; document.getElementById('animalLabel3').textContent = '🎧 第三关 · 接唱挑战'; }
       return;
     }
@@ -925,7 +964,7 @@ function showStep4() {
   });
   // Show cover image initially
   document.getElementById('animalImg4').src = 'images/cover/step4.png';
-  document.getElementById('animalLabel4').textContent = '🌟 第四关 · 唱整首';
+  document.getElementById('animalLabel4').textContent = '🌟 第四关 · 完整演唱';
   document.querySelectorAll('#lyricDots4 .lyric-dot').forEach(d => d.classList.remove('active'));
 }
 
@@ -954,12 +993,12 @@ function togglePlay4() {
   let lastIdx = -1;
   // Show cover first
   document.getElementById('animalImg4').src = 'images/cover/step4.png';
-  document.getElementById('animalLabel4').textContent = '🌟 第四关 · 唱整首';
+  document.getElementById('animalLabel4').textContent = '🌟 第四关 · 完整演唱';
   document.querySelectorAll('#lyricDots4 .lyric-dot').forEach(d => d.classList.remove('active'));
   currentAudio.ontimeupdate = () => {
     const t = currentAudio.currentTime;
-    if (t < coverShowUntil) {
-      if (lastIdx !== -1) { lastIdx = -1; document.getElementById('animalImg4').src = 'images/cover/step4.png'; document.getElementById('animalLabel4').textContent = '🌟 第四关 · 唱整首'; document.querySelectorAll('#lyricDots4 .lyric-dot').forEach(d => d.classList.remove('active')); }
+    if (t < lyricTimes[0]) {
+      if (lastIdx !== -1) { lastIdx = -1; document.getElementById('animalImg4').src = 'images/cover/step4.png'; document.getElementById('animalLabel4').textContent = '🌟 第四关 · 完整演唱'; document.querySelectorAll('#lyricDots4 .lyric-dot').forEach(d => d.classList.remove('active')); }
       return;
     }
     let idx = 0;
@@ -1008,7 +1047,7 @@ function finishStep4() {
   showFragmentPopup(3);
   setTimeout(() => {
     showBadgeAssembly();
-    setTimeout(() => showBadge(), 1200);
+    setTimeout(() => showBadge(), 2200);
   }, 800);
 }
 
