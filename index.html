@@ -244,6 +244,7 @@ body {
     <button class="btn-record" id="btnRecord1" onclick="toggleRecord1()">🎤</button>
     <div class="record-hint" id="recordHint1">点按开始录音跟读</div>
     <div class="record-timer" id="recordTimer1"></div>
+    <div id="playback1" style="margin-top:6px;"></div>
   </div>
   <button class="btn-action btn-gold" id="btnDoneRead" onclick="finishStep1()" style="display:none;">完成念一念，领取碎片 ✓</button>
 </div>
@@ -264,6 +265,7 @@ body {
     <button class="btn-record" id="btnRecord2" onclick="toggleRecord2()">🎤</button>
     <div class="record-hint" id="recordHint2">播放歌曲后，点按录音跟唱</div>
     <div class="record-timer" id="recordTimer2"></div>
+    <div id="playback2" style="margin-top:6px;"></div>
   </div>
   <button class="btn-action btn-primary" id="btnPlay2" onclick="togglePlay2()">▶ 播放歌曲</button>
   <button class="btn-action btn-gold" id="btnDoneSing" onclick="finishStep2()" style="display:none;">完成跟唱，领取碎片 ✓</button>
@@ -285,6 +287,7 @@ body {
     <button class="btn-record" id="btnRecord3" onclick="toggleRecord3()">🎤</button>
     <div class="record-hint" id="recordHint3">播放后自动开始录音</div>
     <div class="record-timer" id="recordTimer3"></div>
+    <div id="playback3" style="margin-top:6px;"></div>
   </div>
   <button class="btn-action btn-primary" id="btnPlay3" onclick="togglePlay3()">▶ 播放接唱音乐</button>
   <button class="btn-action btn-gold" id="btnDoneEcho" onclick="finishStep3()" style="display:none;">完成接唱，领取碎片 ✓</button>
@@ -311,6 +314,7 @@ body {
     <button class="btn-record" id="btnRecord4" onclick="toggleRecord4()">🎤</button>
     <div class="record-hint" id="recordHint4">点按录音，完整演唱</div>
     <div class="record-timer" id="recordTimer4"></div>
+    <div id="playback4" style="margin-top:6px;"></div>
   </div>
   <button class="btn-action btn-primary" id="btnPlay4" onclick="togglePlay4()">▶ 播放音乐</button>
   <button class="btn-action btn-gold" id="btnDoneFull" onclick="finishStep4()" style="display:none;">完成演唱，领取碎片 ✓</button>
@@ -376,6 +380,44 @@ let recordedChunks = [];
 let recordingForStep = null; // 'read','sing','echo','full'
 let recordTimerInterval = null;
 let recordSeconds = 0;
+let lastRecordingURL = null; // For playback after recording
+
+// Sound effects
+const sfx = { ding: null, fanfare: null };
+function initSFX() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Ding sound for fragments
+    sfx.ding = () => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(880, ctx.currentTime);
+      o.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+      g.gain.setValueAtTime(0.3, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + 0.5);
+    };
+    // Fanfare for badge
+    sfx.fanfare = () => {
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.18;
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+        o.start(t);
+        o.stop(t + 0.4);
+      });
+    };
+  } catch(e) {}
+}
 
 // ===== HELPERS =====
 function showPage(id) {
@@ -405,6 +447,8 @@ function updateAllFragments() {
 }
 
 function showFragmentPopup(idx) {
+  initSFX();
+  if (sfx.ding) sfx.ding();
   const fragImgs = ['images/fragments/frag1.png','images/fragments/frag2.png','images/fragments/frag3.png','images/fragments/frag4.png'];
   const colors = ['#FFF5F0','#FFF0F5','#F5F0FF','#FFFDE7'];
   const popup = document.getElementById('fragmentPopup');
@@ -433,10 +477,12 @@ function showFragmentPopup(idx) {
   setTimeout(() => {
     popup.style.display = 'none';
     popup.innerHTML = '';
-  }, 1400);
+  }, 2000);
 }
 
 function showBadgeAssembly() {
+  initSFX();
+  if (sfx.fanfare) sfx.fanfare();
   const fragImgs = ['images/fragments/frag1.png','images/fragments/frag2.png','images/fragments/frag3.png','images/fragments/frag4.png'];
   const container = document.getElementById('fragmentFlyContainer');
   const cx = window.innerWidth / 2;
@@ -494,18 +540,34 @@ function startRecording(stepName) {
     return false;
   }
   stopAllRecording();
+  clearPlayback({read:'1',sing:'2',echo:'3',full:'4'}[stepName]||'1');
   recordedChunks = [];
   recordSeconds = 0;
   recordingForStep = stepName;
 
+  // Find supported MIME type
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/wav'];
+  let mimeType = 'audio/webm';
+  for (const t of types) {
+    if (MediaRecorder.isTypeSupported(t)) { mimeType = t; break; }
+  }
+
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+    try {
+      mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+    } catch(e) {
+      mediaRecorder = new MediaRecorder(stream);
+    }
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
     mediaRecorder.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
       if (recordTimerInterval) { clearInterval(recordTimerInterval); recordTimerInterval = null; }
     };
-    mediaRecorder.start();
+    mediaRecorder.onerror = (e) => {
+      console.error('MediaRecorder error:', e);
+      alert('录音出错，请重试。');
+    };
+    mediaRecorder.start(1000); // Collect data every second
     recordTimerInterval = setInterval(() => {
       recordSeconds++;
       updateRecordTimerDisplay();
@@ -513,7 +575,10 @@ function startRecording(stepName) {
     updateRecordUI(true);
   }).catch(err => {
     console.error('Mic error:', err);
-    alert('无法访问麦克风，请检查权限设置。');
+    let msg = '无法访问麦克风。';
+    if (err.name === 'NotAllowedError') msg = '麦克风权限被拒绝，请在浏览器设置中允许麦克风访问。';
+    else if (err.name === 'NotFoundError') msg = '未检测到麦克风设备。';
+    alert(msg);
   });
   return true;
 }
@@ -529,10 +594,24 @@ function stopRecordingAndSave() {
       const url = URL.createObjectURL(blob);
       if (recordTimerInterval) { clearInterval(recordTimerInterval); recordTimerInterval = null; }
       clearAllTimerDisplays();
+      lastRecordingURL = url;
+      showPlaybackButton(url);
       resolve({ blob, url });
     };
     mr.stop();
   });
+}
+
+function showPlaybackButton(url) {
+  const step = {read:'1',sing:'2',echo:'3',full:'4'}[recordingForStep] || '1';
+  const container = document.getElementById('playback' + step);
+  if (!container) return;
+  container.innerHTML = '<audio controls src="' + url + '" style="width:100%;max-width:300px;height:36px;margin-top:4px;"></audio><br><small style="color:#888;">点击播放聆听你的录音</small>';
+}
+
+function clearPlayback(step) {
+  const container = document.getElementById('playback' + step);
+  if (container) container.innerHTML = '';
 }
 
 function updateRecordUI(isRec) {
@@ -563,6 +642,7 @@ function goHome() {
   stopAllAudio();
   stopAllRecording();
   updateRecordUI(false);
+  for (let s = 1; s <= 4; s++) clearPlayback(s);
   showPage('page-welcome');
   updateAllFragments();
 }
@@ -618,6 +698,8 @@ function toggleRecord1() {
       recordingForStep = null;
     });
   } else {
+    // Switch from cover to first vocab word when recording starts
+    updateVocabUI();
     startRecording('read');
   }
 }
@@ -969,6 +1051,7 @@ function restartAll() {
   echoRound = 0;
   stopAllAudio();
   stopAllRecording();
+  for (let s = 1; s <= 4; s++) clearPlayback(s);
   showPage('page-welcome');
   updateAllFragments();
 }
