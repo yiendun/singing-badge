@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>齐齐望过去 · 粤语童谣探索</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; overflow:hidden; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
+canvas { display:block; }
+
+/* Loading */
+#loading {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:#1a1a2e; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; z-index:100;
+  color:#fff; font-size:18px; transition:opacity 0.5s;
+}
+#loading .spinner {
+  width:50px; height:50px; border:3px solid rgba(255,255,255,0.2);
+  border-top-color:#D4A843; border-radius:50%;
+  animation:spin 0.8s linear infinite; margin-bottom:16px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* Hotspot label */
+.hotspot-label {
+  position:fixed; pointer-events:none; z-index:50;
+  color:#fff; font-size:14px; font-weight:700;
+  text-shadow:0 0 8px rgba(0,0,0,0.7);
+  transform:translate(-50%,-50%);
+  text-align:center; opacity:0; transition:opacity 0.3s;
+}
+.hotspot-label.visible { opacity:1; }
+.hotspot-label .dot {
+  display:block; width:16px; height:16px; border-radius:50%;
+  background:rgba(255,215,0,0.8); margin:0 auto 4px;
+  box-shadow:0 0 12px rgba(255,215,0,0.6);
+  animation:blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+
+/* Top bar */
+#topbar {
+  position:fixed; top:0; left:0; right:0; z-index:60;
+  background:linear-gradient(rgba(0,0,0,0.6),transparent);
+  padding:12px 16px; display:flex; align-items:center; gap:10px;
+}
+#topbar .title { color:#fff; font-size:16px; font-weight:700; letter-spacing:2px; flex:1; }
+#topbar .btn {
+  background:rgba(255,255,255,0.15); color:#fff; border:none;
+  padding:8px 16px; border-radius:20px; font-size:13px; cursor:pointer;
+  backdrop-filter:blur(4px);
+}
+
+/* Bottom hint */
+#hint {
+  position:fixed; bottom:60px; left:50%; transform:translateX(-50%); z-index:60;
+  color:#fff; font-size:13px; background:rgba(0,0,0,0.5);
+  padding:8px 20px; border-radius:20px;
+  animation:fadeHint 3s ease-in-out infinite;
+}
+@keyframes fadeHint { 0%,100%{opacity:0.6} 50%{opacity:1} }
+
+/* Audio toast */
+#audioToast {
+  position:fixed; bottom:120px; left:50%; transform:translateX(-50%); z-index:70;
+  background:rgba(212,168,67,0.9); color:#fff;
+  padding:10px 24px; border-radius:25px; font-size:15px; font-weight:600;
+  pointer-events:none; opacity:0; transition:opacity 0.3s;
+}
+#audioToast.show { opacity:1; }
+
+/* Scene nav arrows */
+.scene-nav {
+  position:fixed; top:50%; transform:translateY(-50%); z-index:55;
+  width:44px; height:44px; border-radius:50%;
+  background:rgba(255,255,255,0.2); color:#fff;
+  border:none; font-size:22px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+#nav-prev { left:12px; }
+#nav-next { right:12px; }
+
+/* Home button */
+#btnHome {
+  position:fixed; top:16px; left:16px; z-index:65;
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(0,0,0,0.4); color:#fff;
+  border:none; font-size:20px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div>场景加载中...</div>
+
+<div id="topbar">
+  <span class="title" id="sceneTitle">🏯 齐齐望过去</span>
+  <button class="btn" id="btnGyro" onclick="toggleGyro()">📱 陀螺仪</button>
+  <button class="btn" onclick="toggleAudio()">🔊</button>
+</div>
+
+<button id="btnHome" onclick="goHome()">←</button>
+<button class="scene-nav" id="nav-prev" onclick="prevScene()">◀</button>
+<button class="scene-nav" id="nav-next" onclick="nextScene()">▶</button>
+
+<div id="hint">👆 拖动画面探索场景</div>
+<div id="audioToast"></div>
+
+<!-- Hotspot labels container -->
+<div id="hsContainer"></div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ===== SCENE DATA =====
+const scenes = [
+  {
+    id: 'qingxi',
+    name: '🏞 清溪',
+    img: 'vr/1.jpg',
+    hotspots: [
+      { id:'frog', label:'🐸 青蛙', lat:10, lon:-20, audio:'audio/hotspot-frog.mp3' },
+      { id:'house', label:'🏠 小屋', lat:-5, lon:30, audio:'audio/hotspot-house.mp3' },
+    ]
+  },
+  {
+    id: 'hill',
+    name: '⛰ 山窿',
+    img: 'vr/2.jpg',
+    hotspots: [
+      { id:'lion', label:'🦁 狮子', lat:5, lon:15, audio:'audio/hotspot-lion.mp3' },
+    ]
+  }
+];
+
+// ===== THREE.JS SETUP =====
+const container = document.body;
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+container.appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 0.1);
+
+const scene3d = new THREE.Scene();
+const textureLoader = new THREE.TextureLoader();
+
+let currentSceneIdx = 0;
+let sphere = null;
+let isUserInteracting = false;
+let lon = 0, lat = 0;
+let prevLon = 0, prevLat = 0;
+let phi = 0, theta = 0;
+let useGyro = false;
+let bgAudio = null;
+let hotspotAudio = null;
+let hotspotLabels = [];
+
+// ===== CREATE SPHERE =====
+function loadScene(idx) {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loading').style.opacity = '1';
+  document.getElementById('sceneTitle').textContent = scenes[idx].name;
+  clearHotspotLabels();
+
+  // Clean old sphere
+  if (sphere) { scene3d.remove(sphere); if (sphere.material) sphere.material.dispose(); }
+
+  textureLoader.load(scenes[idx].img, texture => {
+    const geometry = new THREE.SphereGeometry(50, 64, 32);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.BackSide
+    });
+    sphere = new THREE.Mesh(geometry, material);
+    scene3d.add(sphere);
+
+    document.getElementById('loading').style.opacity = '0';
+    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
+
+    createHotspotLabels(idx);
+    updateNavButtons();
+  });
+}
+
+// ===== HOTSPOTS =====
+function createHotspotLabels(idx) {
+  clearHotspotLabels();
+  const container = document.getElementById('hsContainer');
+  const hsList = scenes[idx].hotspots;
+
+  hsList.forEach((hs, i) => {
+    const el = document.createElement('div');
+    el.className = 'hotspot-label';
+    el.innerHTML = '<span class="dot"></span>' + hs.label;
+    el.addEventListener('click', () => onHotspotClick(hs));
+    el.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      onHotspotClick(hs);
+    });
+    container.appendChild(el);
+    hotspotLabels.push({ el, hs });
+  });
+}
+
+function clearHotspotLabels() {
+  hotspotLabels = [];
+  document.getElementById('hsContainer').innerHTML = '';
+}
+
+function onHotspotClick(hs) {
+  showToast('🔊 ' + hs.label);
+  playHotspotAudio(hs.audio);
+}
+
+function playHotspotAudio(src) {
+  if (hotspotAudio) { hotspotAudio.pause(); }
+  hotspotAudio = new Audio(src);
+  hotspotAudio.play().catch(() => {});
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('audioToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ===== UPDATE HOTSPOT POSITIONS =====
+function updateHotspotPositions() {
+  hotspotLabels.forEach(({el, hs}) => {
+    const pos = latLonToScreen(hs.lat, hs.lon);
+    if (pos) {
+      el.style.left = pos.x + 'px';
+      el.style.top = pos.y + 'px';
+      el.classList.add('visible');
+    } else {
+      el.classList.remove('visible');
+    }
+  });
+}
+
+function latLonToScreen(latDeg, lonDeg) {
+  const hw = window.innerWidth / 2;
+  const hh = window.innerHeight / 2;
+
+  // Convert current view angle + hotspot offset to direction vector
+  const latRad = THREE.MathUtils.degToRad(lat + latDeg);
+  const lonRad = THREE.MathUtils.degToRad(lon + lonDeg);
+
+  const x = Math.cos(latRad) * Math.sin(lonRad);
+  const y = Math.sin(latRad);
+  const z = Math.cos(latRad) * Math.cos(lonRad);
+
+  // Check if in front of camera
+  if (z < -0.1) return null;
+
+  // Project to screen
+  const sx = hw + (x / z) * hw;
+  const sy = hh + (-y / z) * hh;
+
+  if (sx < -100 || sx > window.innerWidth + 100 || sy < -100 || sy > window.innerHeight + 100) return null;
+
+  return { x: sx, y: sy };
+}
+
+// ===== INPUT HANDLING =====
+function onPointerDown(e) {
+  if (useGyro) return;
+  isUserInteracting = true;
+  prevLon = (e.clientX || e.touches?.[0]?.clientX || 0);
+  prevLat = (e.clientY || e.touches?.[0]?.clientY || 0);
+  document.getElementById('hint').style.display = 'none';
+}
+
+function onPointerMove(e) {
+  if (!isUserInteracting || useGyro) return;
+  const cx = e.clientX || e.touches?.[0]?.clientX || 0;
+  const cy = e.clientY || e.touches?.[0]?.clientY || 0;
+  lon += (cx - prevLon) * 0.3;
+  lat -= (cy - prevLat) * 0.3;
+  lat = Math.max(-60, Math.min(60, lat));
+  prevLon = cx;
+  prevLat = cy;
+}
+
+function onPointerUp() { isUserInteracting = false; }
+
+renderer.domElement.addEventListener('mousedown', onPointerDown);
+renderer.domElement.addEventListener('mousemove', onPointerMove);
+renderer.domElement.addEventListener('mouseup', onPointerUp);
+renderer.domElement.addEventListener('touchstart', onPointerDown, {passive:false});
+renderer.domElement.addEventListener('touchmove', onPointerMove, {passive:false});
+renderer.domElement.addEventListener('touchend', onPointerUp);
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ===== GYROSCOPE =====
+function toggleGyro() {
+  useGyro = !useGyro;
+  document.getElementById('btnGyro').textContent = useGyro ? '📱 陀螺仪:开' : '📱 陀螺仪';
+  if (useGyro) {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(r => {
+        if (r === 'granted') window.addEventListener('deviceorientation', onDeviceOrientation);
+      }).catch(() => {});
+    } else {
+      window.addEventListener('deviceorientation', onDeviceOrientation);
+    }
+  } else {
+    window.removeEventListener('deviceorientation', onDeviceOrientation);
+  }
+}
+
+function onDeviceOrientation(e) {
+  if (!useGyro) return;
+  if (e.alpha !== null) {
+    lon = -e.alpha;
+    lat = e.beta - 45;
+    lat = Math.max(-60, Math.min(60, lat));
+  }
+}
+
+// ===== SCENE NAVIGATION =====
+function nextScene() {
+  currentSceneIdx = (currentSceneIdx + 1) % scenes.length;
+  lon = 0; lat = 0;
+  loadScene(currentSceneIdx);
+}
+
+function prevScene() {
+  currentSceneIdx = (currentSceneIdx - 1 + scenes.length) % scenes.length;
+  lon = 0; lat = 0;
+  loadScene(currentSceneIdx);
+}
+
+function updateNavButtons() {
+  document.getElementById('nav-prev').style.display = scenes.length > 1 ? 'flex' : 'none';
+  document.getElementById('nav-next').style.display = scenes.length > 1 ? 'flex' : 'none';
+}
+
+function goHome() { window.location.href = 'index.html'; }
+
+// ===== ANIMATION LOOP =====
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (!isUserInteracting && !useGyro) {
+    // Auto-rotate slowly
+    lon += 0.03;
+  }
+
+  lat = Math.max(-60, Math.min(60, lat));
+
+  phi = THREE.MathUtils.degToRad(90 - lat);
+  theta = THREE.MathUtils.degToRad(lon);
+
+  const x = 0.1 * Math.sin(phi) * Math.cos(theta);
+  const y = 0.1 * Math.cos(phi);
+  const z = 0.1 * Math.sin(phi) * Math.sin(theta);
+  camera.lookAt(x, y, z);
+
+  updateHotspotPositions();
+  renderer.render(scene3d, camera);
+}
+
+// ===== BG AUDIO =====
+function toggleAudio() {
+  if (bgAudio && !bgAudio.paused) {
+    bgAudio.pause();
+  } else if (bgAudio) {
+    bgAudio.play();
+  }
+}
+
+// ===== START =====
+loadScene(0);
+animate();
+
+// Export to window
+window.nextScene = nextScene;
+window.prevScene = prevScene;
+window.toggleGyro = toggleGyro;
+window.toggleAudio = toggleAudio;
+window.goHome = goHome;
+</script>
+</body>
+</html>
