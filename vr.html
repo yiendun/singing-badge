@@ -2,12 +2,12 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>齐齐望过去 · 360° 全景探索</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>齐齐望过去 · 全景探索</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#000; overflow:hidden; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
-canvas { display:block; }
+html,body { width:100%; height:100%; overflow:hidden; background:#000; font-family:'PingFang SC','Microsoft YaHei',sans-serif; touch-action:none; -webkit-touch-callout:none; }
+canvas { display:block; position:fixed; top:0; left:0; width:100%; height:100%; }
 
 #loading {
   position:fixed; inset:0; background:#111; display:flex;
@@ -17,34 +17,45 @@ canvas { display:block; }
 #loading .ring { width:44px; height:44px; border:3px solid rgba(255,255,255,0.15); border-top-color:#D4A843; border-radius:50%; animation:spin 0.9s linear infinite; margin-bottom:14px; }
 @keyframes spin { to{transform:rotate(360deg)} }
 
-#hint {
-  position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:80;
-  color:#fff; font-size:13px; background:rgba(0,0,0,0.5);
-  padding:7px 22px; border-radius:18px; pointer-events:none;
-  transition:opacity 0.8s;
+/* ===== Bottom Navigation Dots ===== */
+#nav-bar {
+  position:fixed; bottom:0; left:0; right:0; z-index:80;
+  background:linear-gradient(transparent, rgba(0,0,0,0.7));
+  padding:50px 16px 24px; display:flex; justify-content:center;
+  gap:20px; pointer-events:none;
 }
+.nav-dot-wrap {
+  pointer-events:auto; display:flex; flex-direction:column;
+  align-items:center; gap:6px; cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.nav-dot {
+  width:44px; height:44px; border-radius:50%; border:2px solid rgba(255,255,255,0.4);
+  background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center;
+  font-size:22px; transition:all 0.35s;
+}
+.nav-dot.active {
+  border-color:#D4A843; background:rgba(212,168,67,0.3);
+  box-shadow:0 0 16px rgba(212,168,67,0.5); transform:scale(1.15);
+}
+.nav-dot-label { color:#fff; font-size:11px; font-weight:600; text-align:center; transition:color 0.35s; }
+.nav-dot.active + .nav-dot-label { color:#D4A843; }
 
-#topbar {
-  position:fixed; top:0; left:0; right:0; z-index:80;
-  background:linear-gradient(rgba(0,0,0,0.55),transparent);
-  padding:12px 14px; display:flex; align-items:center; gap:10px;
-}
-#topbar .title { color:#fff; font-size:15px; font-weight:700; letter-spacing:2px; flex:1; }
-#topbar .btn {
-  background:rgba(255,255,255,0.12); color:#fff; border:none;
-  padding:7px 13px; border-radius:18px; font-size:12px; cursor:pointer;
+/* ===== Hint ===== */
+#hint {
+  position:fixed; bottom:140px; left:50%; transform:translateX(-50%); z-index:80;
+  color:#fff; font-size:12px; background:rgba(0,0,0,0.45);
+  padding:6px 18px; border-radius:16px; pointer-events:none;
+  transition:opacity 0.8s;
 }
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="ring"></div>360° 场景加载中...</div>
-<div id="hint">👆 拖动画面 · 环顾四周</div>
+<div id="loading"><div class="ring"></div>场景加载中...</div>
+<div id="hint">👆 拖动探索 · 点击底部圆点切换场景</div>
 
-<div id="topbar">
-  <span class="title">🏯 齐齐望过去 · 360° 全景</span>
-  <button class="btn" onclick="toggleVR()">🥽 VR</button>
-</div>
+<!-- Navigation dots -->
+<div id="nav-bar"></div>
 
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
@@ -52,93 +63,134 @@ canvas { display:block; }
 <script type="module">
 import * as THREE from 'three';
 
-// ===== IMAGES (4 walls around user) =====
-const imgFiles = [
-  'vr/a6f0592a292847b52698cb9b451c55ef.jpg',
-  'vr/a7e9c6608e86ed9f8a958c7f57768d09.jpg',
-  'vr/小猪.jpg',
-  'vr/青蛙.jpg',
+// ===== SCENE DATA =====
+const scenes = [
+  { id:'frog',  label:'青蛙', icon:'🐸', img:'vr/青蛙.jpg' },
+  { id:'pig',   label:'小猪', icon:'🐷', img:'vr/小猪.jpg' },
+  { id:'myna',  label:'鹩哥', icon:'🐦', img:'vr/鹩哥.jpg' },
+  { id:'lion',  label:'狮子', icon:'🦁', img:'vr/狮子.jpg' },
 ];
 
-// ===== THREE.JS SETUP =====
+// ===== THREE.JS =====
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 50);
-camera.position.set(0, 1.5, 0);
+const scene3d = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 50);
+camera.position.set(0, 0, 0);
 
 const loader = new THREE.TextureLoader();
-let loaded = 0;
 
-// ===== CREATE 360° CUBE ROOM =====
-const SIZE = 12; // Room size
-const HEIGHT = 5;
-const walls = []; // Store for later cleanup
+// ===== BUILD CURVED GALLERY =====
+const R = 6;       // Cylinder radius
+const H = 6.5;     // Cylinder height - tall enough to fill mobile screen
 
-function createRoom() {
-  const texPromises = imgFiles.map(f => new Promise(resolve => {
-    loader.load(f, tex => {
+let cylinder = null;
+const textures = [];
+
+function loadAll() {
+  let loaded = 0;
+  const total = scenes.length;
+
+  // Load textures
+  const promises = scenes.map((s, i) => new Promise(resolve => {
+    loader.load(s.img, tex => {
       tex.colorSpace = THREE.SRGBColorSpace;
+      textures[i] = tex;
       loaded++;
-      if (loaded >= 4) {
+      if (loaded >= total) {
         document.getElementById('loading').style.opacity = '0';
-        setTimeout(() => document.getElementById('loading').style.display = 'none', 600);
+        setTimeout(() => document.getElementById('loading').style.display = 'none', 500);
       }
-      resolve(tex);
+      resolve();
     });
   }));
 
-  Promise.all(texPromises).then(textures => {
-    // 4 walls arranged in a square around the viewer
-    // Front (0°), Right (90°), Back (180°), Left (270°)
-    const positions = [
-      { x:0, z:-SIZE/2, ry:0 },           // Front
-      { x:SIZE/2, z:0, ry:Math.PI/2 },     // Right
-      { x:0, z:SIZE/2, ry:Math.PI },       // Back
-      { x:-SIZE/2, z:0, ry:-Math.PI/2 },   // Left
-    ];
+  // Build cylinder once textures are ready
+  Promise.all(promises).then(() => buildCylinder());
+}
 
-    textures.forEach((tex, i) => {
-      const aspect = tex.image.width / tex.image.height;
-      const wallW = SIZE;
-      const wallH = wallW / aspect;
-      const geom = new THREE.PlaneGeometry(wallW, wallH);
-      const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
-      const wall = new THREE.Mesh(geom, mat);
-      wall.position.set(positions[i].x, HEIGHT/2, positions[i].z);
-      wall.rotation.y = positions[i].ry;
-      walls.push(wall);
-      scene.add(wall);
-    });
+function buildCylinder() {
+  // Create cylinder segments, one per scene
+  // Each scene occupies 90° of the 360° cylinder
+  const total = scenes.length;
+  const segAngle = (Math.PI * 2) / total;
 
-    // Add floor
-    const floorGeom = new THREE.PlaneGeometry(SIZE, SIZE);
-    const floorMat = new THREE.MeshBasicMaterial({ color: 0x2a1f0e, side: THREE.DoubleSide });
-    const floor = new THREE.Mesh(floorGeom, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -HEIGHT/4;
-    scene.add(floor);
-    walls.push(floor);
+  // Ground and sky (simple gradient colors)
+  const floorGeom = new THREE.CylinderGeometry(R-0.05, R-0.05, H*0.1, 64);
+  const floorMat = new THREE.MeshBasicMaterial({ color: 0x3d2c1e, side: THREE.DoubleSide });
+  const floor = new THREE.Mesh(floorGeom, floorMat);
+  floor.position.y = -H/2 - H*0.05;
+  scene3d.add(floor);
 
-    // Add ceiling
-    const ceilGeom = new THREE.PlaneGeometry(SIZE, SIZE);
-    const ceilMat = new THREE.MeshBasicMaterial({ color: 0x1a1510, side: THREE.DoubleSide });
-    const ceil = new THREE.Mesh(ceilGeom, ceilMat);
-    ceil.rotation.x = Math.PI / 2;
-    ceil.position.y = HEIGHT * 0.9;
-    scene.add(ceil);
-    walls.push(ceil);
+  const ceilGeom = new THREE.CylinderGeometry(R-0.05, R-0.05, H*0.1, 64);
+  const ceilMat = new THREE.MeshBasicMaterial({ color: 0x1a1510, side: THREE.DoubleSide });
+  const ceil = new THREE.Mesh(ceilGeom, ceilMat);
+  ceil.position.y = H/2 + H*0.05;
+  scene3d.add(ceil);
+
+  // Wall segments
+  for (let i = 0; i < total; i++) {
+    const geom = new THREE.CylinderGeometry(R, R, H, 32, 1, true, i * segAngle, segAngle);
+    const mat = new THREE.MeshBasicMaterial({ map: textures[i], side: THREE.BackSide, transparent: false });
+    const seg = new THREE.Mesh(geom, mat);
+    seg.name = 'seg-' + i;
+    scene3d.add(seg);
+  }
+
+  // Build navigation
+  buildNav();
+}
+
+// ===== BOTTOM NAV DOTS =====
+function buildNav() {
+  const bar = document.getElementById('nav-bar');
+  bar.innerHTML = '';
+  scenes.forEach((s, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'nav-dot-wrap';
+    wrap.onclick = () => goTo(i);
+
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === currentScene ? ' active' : '');
+    dot.textContent = s.icon;
+    dot.id = 'dot-' + i;
+
+    const label = document.createElement('div');
+    label.className = 'nav-dot-label';
+    label.textContent = s.label;
+
+    wrap.appendChild(dot);
+    wrap.appendChild(label);
+    bar.appendChild(wrap);
   });
 }
 
+function updateNavHighlight(idx) {
+  for (let i = 0; i < scenes.length; i++) {
+    const dot = document.getElementById('dot-' + i);
+    if (dot) dot.classList.toggle('active', i === idx);
+  }
+}
+
+// ===== NAVIGATION =====
+let currentScene = 0;
+
+function goTo(idx) {
+  currentScene = idx;
+  // Calculate target angle: each scene center at i * 90° + 45° offset
+  const segAngle = 360 / scenes.length;
+  targetLon = -(idx * segAngle + segAngle/2);
+  updateNavHighlight(idx);
+}
+window.goTo = goTo;
+
 // ===== INPUT =====
 let isDragging = false, lastX = 0, lastY = 0;
-let lon = 0, lat = 0;
-let targetLon = 0, targetLat = 0;
+let lon = -(360 / scenes.length / 2), targetLon = lon; // Start at first scene
+let lat = 0, targetLat = 0;
 
 renderer.domElement.addEventListener('pointerdown', e => {
   isDragging = true;
@@ -148,68 +200,63 @@ renderer.domElement.addEventListener('pointerdown', e => {
 
 renderer.domElement.addEventListener('pointermove', e => {
   if (!isDragging) return;
-  targetLon += (e.clientX - lastX) * 0.25;
-  targetLat -= (e.clientY - lastY) * 0.15;
-  targetLat = Math.max(-40, Math.min(40, targetLat));
+  targetLon += (e.clientX - lastX) * 0.3;
+  targetLat -= (e.clientY - lastY) * 0.12;
+  targetLat = Math.max(-35, Math.min(35, targetLat));
   lastX = e.clientX; lastY = e.clientY;
 });
 
 renderer.domElement.addEventListener('pointerup', () => { isDragging = false; });
 renderer.domElement.addEventListener('pointerleave', () => { isDragging = false; });
 
-// ===== VR MODE =====
-window.toggleVR = () => {
-  if (!('xr' in navigator) || !navigator.xr) {
-    alert('你的设备不支持 VR 模式');
-    return;
-  }
-  navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-    if (supported) {
-      renderer.xr.getSession().then(s => renderer.xr.setSession(s));
-    } else {
-      alert('你的设备不支持沉浸式 VR');
-    }
-  }).catch(() => {});
-};
-
-// ===== GYROSCOPE (mobile) =====
-let gyroOn = false;
-window.addEventListener('deviceorientation', e => {
-  if (!gyroOn || isDragging) return;
-  if (e.alpha !== null) targetLon = -e.alpha;
-  if (e.beta !== null) targetLat = e.beta - 30;
-});
+// Wheel zoom (desktop)
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  camera.fov = Math.max(50, Math.min(100, camera.fov + e.deltaY * 0.05));
+  camera.updateProjectionMatrix();
+}, { passive: false });
 
 // ===== RESIZE =====
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+function onResize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  camera.aspect = w / h;
+  // Adjust FOV so cylinder fills screen vertically on narrow mobile screens
+  if (w / h < 0.7) {
+    camera.fov = 78;
+  } else {
+    camera.fov = 65;
+  }
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setSize(w, h);
+}
+window.addEventListener('resize', onResize);
+onResize(); // Run immediately
+window.addEventListener('orientationchange', () => setTimeout(onResize, 200));
 
 // ===== ANIMATE =====
 function animate() {
   requestAnimationFrame(animate);
 
   // Smooth lerp
-  lon += (targetLon - lon) * 0.08;
-  lat += (targetLat - lat) * 0.08;
+  lon += (targetLon - lon) * 0.1;
+  lat += (targetLat - lat) * 0.1;
 
   const phi = THREE.MathUtils.degToRad(90 - lat);
   const theta = THREE.MathUtils.degToRad(lon);
 
-  // Look around from center
   const r = 0.01;
-  const x = r * Math.sin(phi) * Math.sin(theta);
-  const y = r * Math.cos(phi);
-  const z = r * Math.sin(phi) * Math.cos(theta);
-  camera.lookAt(x, y + 1.5, z);
+  camera.lookAt(
+    r * Math.sin(phi) * Math.sin(theta),
+    r * Math.cos(phi),
+    r * Math.sin(phi) * Math.cos(theta)
+  );
 
-  renderer.render(scene, camera);
+  renderer.render(scene3d, camera);
 }
 
 // ===== START =====
-createRoom();
+loadAll();
 animate();
 </script>
 </body>
