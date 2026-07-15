@@ -47,11 +47,35 @@ canvas { display:block; position:fixed; top:0; left:0; width:100%; height:100%; 
   padding:6px 18px; border-radius:16px; pointer-events:none;
   transition:opacity 0.8s;
 }
+
+/* ===== Music Note Button ===== */
+#music-btn {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:85;
+  width:64px; height:64px; border-radius:50%; cursor:pointer;
+  background:rgba(212,168,67,0.8); border:2px solid rgba(255,255,255,0.5);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; box-shadow:0 0 24px rgba(212,168,67,0.4);
+  animation: noteFloat 2s ease-in-out infinite;
+  -webkit-tap-highlight-color:transparent;
+}
+#music-btn.playing {
+  background:rgba(196,30,58,0.85);
+  animation: notePulse 0.6s ease-in-out infinite;
+}
+@keyframes noteFloat {
+  0%,100%{ transform:translate(-50%,-50%) translateY(0); }
+  50%{ transform:translate(-50%,-50%) translateY(-8px); }
+}
+@keyframes notePulse {
+  0%,100%{ transform:translate(-50%,-50%) scale(1); }
+  50%{ transform:translate(-50%,-50%) scale(1.15); }
+}
 </style>
 </head>
 <body>
 
 <div id="loading"><div class="ring"></div>场景加载中...</div>
+<button id="music-btn" onclick="toggleMusic()">🎵</button>
 <div id="hint">👆 拖动探索 · 点击底部圆点切换场景</div>
 
 <!-- Navigation dots -->
@@ -66,9 +90,9 @@ import * as THREE from 'three';
 // ===== SCENE DATA =====
 const scenes = [
   { id:'frog',  label:'青蛙', icon:'🐸', img:'vr/青蛙.jpg' },
-  { id:'pig',   label:'小猪', icon:'🐷', img:'vr/小猪.jpg' },
-  { id:'myna',  label:'鹩哥', icon:'🐦', img:'vr/鹩哥.jpg' },
   { id:'lion',  label:'狮子', icon:'🦁', img:'vr/狮子.jpg' },
+  { id:'myna',  label:'鹩哥', icon:'🐦', img:'vr/鹩哥.jpg' },
+  { id:'pig',   label:'小猪', icon:'🐷', img:'vr/小猪.jpg' },
 ];
 
 // ===== THREE.JS =====
@@ -247,6 +271,86 @@ function animate() {
 
   renderer.render(scene3d, camera);
 }
+
+// ===== AUDIO =====
+let audioCtx = null;
+let audioSrc = null;
+let gainNode = null;
+let musicPlaying = false;
+let fadeTimer = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gainNode = audioCtx.createGain();
+    gainNode.connect(audioCtx.destination);
+  }
+}
+
+function fadeOut(duration = 1.5) {
+  if (!gainNode) return;
+  const start = gainNode.gain.value;
+  const t0 = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(t0);
+  gainNode.gain.setValueAtTime(start, t0);
+  gainNode.gain.linearRampToValueAtTime(0, t0 + duration);
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
+    if (audioSrc) { audioSrc.stop(); audioSrc = null; }
+    musicPlaying = false;
+    updateMusicBtn();
+  }, duration * 1000 + 200);
+}
+
+function playMusic() {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // Stop any previous audio
+  if (audioSrc) { try { audioSrc.stop(); } catch(e) {} audioSrc = null; }
+  clearTimeout(fadeTimer);
+
+  // Use the full song as background
+  fetch('audio/full.mp3').then(r => r.arrayBuffer()).then(buf => {
+    audioCtx.decodeAudioData(buf, decoded => {
+      audioSrc = audioCtx.createBufferSource();
+      audioSrc.buffer = decoded;
+      audioSrc.loop = true;
+      audioSrc.connect(gainNode);
+      gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 1.0);
+      audioSrc.start(0);
+      musicPlaying = true;
+      updateMusicBtn();
+    });
+  }).catch(() => {
+    alert('音乐加载失败');
+  });
+}
+
+function toggleMusic() {
+  if (musicPlaying) {
+    fadeOut(1.5);
+  } else {
+    playMusic();
+  }
+}
+window.toggleMusic = toggleMusic;
+
+function updateMusicBtn() {
+  const btn = document.getElementById('music-btn');
+  btn.textContent = musicPlaying ? '🎶' : '🎵';
+  btn.classList.toggle('playing', musicPlaying);
+}
+
+// Override goTo to fade music
+const _goTo = goTo;
+goTo = function(idx) {
+  if (musicPlaying) fadeOut(1.0);
+  _goTo(idx);
+};
+window.goTo = goTo;
 
 // ===== START =====
 loadAll();
