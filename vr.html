@@ -3,98 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>齐齐望过去 · 场景探索</title>
+<title>齐齐望过去 · 360° 全景探索</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#000; overflow:hidden; font-family:'PingFang SC','Microsoft YaHei',sans-serif; touch-action:none; }
+body { background:#000; overflow:hidden; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
 canvas { display:block; }
 
 #loading {
-  position:fixed; inset:0; background:#1a1a2e; display:flex;
+  position:fixed; inset:0; background:#111; display:flex;
   flex-direction:column; align-items:center; justify-content:center;
-  z-index:100; color:#fff; font-size:18px; transition:opacity 0.5s;
+  z-index:100; color:#fff; font-size:16px; transition:opacity 0.6s;
 }
-#loading .spinner { width:50px; height:50px; border:3px solid rgba(255,255,255,0.2); border-top-color:#D4A843; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:16px; }
+#loading .ring { width:44px; height:44px; border:3px solid rgba(255,255,255,0.15); border-top-color:#D4A843; border-radius:50%; animation:spin 0.9s linear infinite; margin-bottom:14px; }
 @keyframes spin { to{transform:rotate(360deg)} }
 
-/* Hotspot */
-.hs-dot {
-  position:fixed; z-index:60; pointer-events:auto; cursor:pointer;
-  width:60px; height:60px; border-radius:50%;
-  background:radial-gradient(circle, rgba(255,215,0,0.7) 0%, rgba(255,215,0,0.2) 50%, transparent 70%);
-  transform:translate(-50%,-50%);
-  animation: hsPulse 1.8s ease-in-out infinite;
-  display:flex; align-items:center; justify-content:center;
-}
-.hs-dot::after {
-  content:''; width:16px; height:16px; border-radius:50%;
-  background:rgba(255,215,0,0.9); box-shadow:0 0 10px rgba(255,215,0,0.6);
-}
-@keyframes hsPulse { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.3)} }
-
-.hs-label {
-  position:fixed; z-index:61; pointer-events:none;
-  color:#fff; font-size:15px; font-weight:700;
-  text-shadow:0 0 8px rgba(0,0,0,0.8);
-  transform:translate(-50%,-90px);
-  text-align:center; white-space:nowrap;
-}
-
-/* Top bar */
-#topbar {
-  position:fixed; top:0; left:0; right:0; z-index:70;
-  background:linear-gradient(rgba(0,0,0,0.5),transparent);
-  padding:14px 16px; display:flex; align-items:center; gap:12px;
-}
-#topbar .title { color:#fff; font-size:16px; font-weight:700; letter-spacing:2px; flex:1; }
-#topbar .btn {
-  background:rgba(255,255,255,0.15); color:#fff; border:none;
-  padding:8px 14px; border-radius:20px; font-size:12px; cursor:pointer;
-}
-
-/* Bottom hint */
 #hint {
-  position:fixed; bottom:60px; left:50%; transform:translateX(-50%); z-index:70;
-  color:#fff; font-size:13px; background:rgba(0,0,0,0.45);
-  padding:8px 20px; border-radius:20px; transition:opacity 0.8s;
+  position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:80;
+  color:#fff; font-size:13px; background:rgba(0,0,0,0.5);
+  padding:7px 22px; border-radius:18px; pointer-events:none;
+  transition:opacity 0.8s;
 }
 
-/* Navigation arrow */
-.nav-arrow {
-  position:fixed; top:50%; transform:translateY(-50%); z-index:65;
-  font-size:36px; color:rgba(255,255,255,0.7); pointer-events:auto; cursor:pointer;
-  width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,0.3);
-  display:flex; align-items:center; justify-content:center;
-  transition:all 0.3s;
+#topbar {
+  position:fixed; top:0; left:0; right:0; z-index:80;
+  background:linear-gradient(rgba(0,0,0,0.55),transparent);
+  padding:12px 14px; display:flex; align-items:center; gap:10px;
 }
-.nav-arrow:active { background:rgba(212,168,67,0.5); color:#fff; }
-
-/* Transition overlay */
-#transition {
-  position:fixed; inset:0; z-index:90; background:#000;
-  opacity:0; pointer-events:none; transition:opacity 0.6s;
+#topbar .title { color:#fff; font-size:15px; font-weight:700; letter-spacing:2px; flex:1; }
+#topbar .btn {
+  background:rgba(255,255,255,0.12); color:#fff; border:none;
+  padding:7px 13px; border-radius:18px; font-size:12px; cursor:pointer;
 }
 </style>
 </head>
 <body>
-<div id="loading"><div class="spinner"></div>场景加载中...</div>
-<div id="transition"></div>
-<canvas id="c"></canvas>
 
-<!-- Top bar -->
+<div id="loading"><div class="ring"></div>360° 场景加载中...</div>
+<div id="hint">👆 拖动画面 · 环顾四周</div>
+
 <div id="topbar">
-  <span class="title" id="sceneTitle">🐸 清溪 · 青蛙</span>
-  <button class="btn" onclick="toggleGyro()">📱 陀螺仪</button>
+  <span class="title">🏯 齐齐望过去 · 360° 全景</span>
+  <button class="btn" onclick="toggleVR()">🥽 VR</button>
 </div>
-
-<!-- Hotspots -->
-<div class="hs-dot" id="hsNext" style="right:8%;top:50%;" onclick="goNext()"></div>
-<div class="hs-label" id="hsNextLabel" style="right:8%;top:50%;">去看看小猪 🐷</div>
-
-<div class="hs-dot" id="hsPrev" style="left:8%;top:50%;display:none;" onclick="goPrev()"></div>
-<div class="hs-label" id="hsPrevLabel" style="left:8%;top:50%;display:none;">回去看青蛙 🐸</div>
-
-<div id="hint">👈 拖动画面，点击光圈探索新场景</div>
 
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
@@ -102,134 +52,133 @@ canvas { display:block; }
 <script type="module">
 import * as THREE from 'three';
 
-// ===== SCENE DATA =====
-const scenes = [
-  { id:'frog', name:'🐸 清溪 · 青蛙', img:'vr/青蛙.jpg', next:1, prev:null },
-  { id:'pig',  name:'🐷 小屋 · 猪仔', img:'vr/小猪.jpg',  next:null, prev:0 },
+// ===== IMAGES (4 walls around user) =====
+const imgFiles = [
+  'vr/a6f0592a292847b52698cb9b451c55ef.jpg',
+  'vr/a7e9c6608e86ed9f8a958c7f57768d09.jpg',
+  'vr/小猪.jpg',
+  'vr/青蛙.jpg',
 ];
-let currentIdx = 0;
 
-// ===== THREE.JS =====
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+// ===== THREE.JS SETUP =====
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000);
+renderer.xr.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
-camera.position.set(0, 0, 0);
-const scene3d = new THREE.Scene();
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 50);
+camera.position.set(0, 1.5, 0);
+
 const loader = new THREE.TextureLoader();
+let loaded = 0;
 
-let cylinder = null;
-let texture = null;
-let curLon = 0, targetLon = 0;
-let isDragging = false, lastX = 0;
-let useGyro = false;
-let gyroBase = 0;
+// ===== CREATE 360° CUBE ROOM =====
+const SIZE = 12; // Room size
+const HEIGHT = 5;
+const walls = []; // Store for later cleanup
 
-// ===== CREATE SCENE =====
-function buildCylinder() {
-  if (cylinder) { scene3d.remove(cylinder); cylinder.geometry.dispose(); }
-  if (texture) texture.dispose();
+function createRoom() {
+  const texPromises = imgFiles.map(f => new Promise(resolve => {
+    loader.load(f, tex => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      loaded++;
+      if (loaded >= 4) {
+        document.getElementById('loading').style.opacity = '0';
+        setTimeout(() => document.getElementById('loading').style.display = 'none', 600);
+      }
+      resolve(tex);
+    });
+  }));
 
-  // Cylinder arc covering ~120 degrees
-  const geom = new THREE.CylinderGeometry(8, 8, 6, 48, 1, true, THREE.MathUtils.degToRad(180), THREE.MathUtils.degToRad(220));
-  const mat = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-  cylinder = new THREE.Mesh(geom, mat);
-  cylinder.rotation.y = THREE.MathUtils.degToRad(20);
-  scene3d.add(cylinder);
-}
+  Promise.all(texPromises).then(textures => {
+    // 4 walls arranged in a square around the viewer
+    // Front (0°), Right (90°), Back (180°), Left (270°)
+    const positions = [
+      { x:0, z:-SIZE/2, ry:0 },           // Front
+      { x:SIZE/2, z:0, ry:Math.PI/2 },     // Right
+      { x:0, z:SIZE/2, ry:Math.PI },       // Back
+      { x:-SIZE/2, z:0, ry:-Math.PI/2 },   // Left
+    ];
 
-function loadScene(idx) {
-  currentIdx = idx;
-  const data = scenes[idx];
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('loading').style.opacity = '1';
-  document.getElementById('sceneTitle').textContent = data.name;
-  curLon = 0; targetLon = 0;
+    textures.forEach((tex, i) => {
+      const aspect = tex.image.width / tex.image.height;
+      const wallW = SIZE;
+      const wallH = wallW / aspect;
+      const geom = new THREE.PlaneGeometry(wallW, wallH);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+      const wall = new THREE.Mesh(geom, mat);
+      wall.position.set(positions[i].x, HEIGHT/2, positions[i].z);
+      wall.rotation.y = positions[i].ry;
+      walls.push(wall);
+      scene.add(wall);
+    });
 
-  updateNavUI();
+    // Add floor
+    const floorGeom = new THREE.PlaneGeometry(SIZE, SIZE);
+    const floorMat = new THREE.MeshBasicMaterial({ color: 0x2a1f0e, side: THREE.DoubleSide });
+    const floor = new THREE.Mesh(floorGeom, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -HEIGHT/4;
+    scene.add(floor);
+    walls.push(floor);
 
-  loader.load(data.img, tex => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    texture = tex;
-    if (!cylinder) buildCylinder();
-    cylinder.material.map = tex;
-    cylinder.material.needsUpdate = true;
-    document.getElementById('loading').style.opacity = '0';
-    setTimeout(() => document.getElementById('loading').style.display = 'none', 500);
+    // Add ceiling
+    const ceilGeom = new THREE.PlaneGeometry(SIZE, SIZE);
+    const ceilMat = new THREE.MeshBasicMaterial({ color: 0x1a1510, side: THREE.DoubleSide });
+    const ceil = new THREE.Mesh(ceilGeom, ceilMat);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.y = HEIGHT * 0.9;
+    scene.add(ceil);
+    walls.push(ceil);
   });
 }
 
-function updateNavUI() {
-  const d = scenes[currentIdx];
-  document.getElementById('hsNext').style.display = d.next !== null ? 'flex' : 'none';
-  document.getElementById('hsNextLabel').style.display = d.next !== null ? 'block' : 'none';
-  document.getElementById('hsPrev').style.display = d.prev !== null ? 'flex' : 'none';
-  document.getElementById('hsPrevLabel').style.display = d.prev !== null ? 'block' : 'none';
-}
-
-// ===== NAVIGATION =====
-function transitionTo(idx) {
-  const overlay = document.getElementById('transition');
-  overlay.style.opacity = '1';
-  setTimeout(() => {
-    loadScene(idx);
-    curLon = 0; targetLon = 0;
-    setTimeout(() => { overlay.style.opacity = '0'; }, 300);
-  }, 600);
-}
-
-window.goNext = () => {
-  const next = scenes[currentIdx].next;
-  if (next !== null) transitionTo(next);
-};
-window.goPrev = () => {
-  const prev = scenes[currentIdx].prev;
-  if (prev !== null) transitionTo(prev);
-};
-
 // ===== INPUT =====
-canvas.addEventListener('pointerdown', e => {
+let isDragging = false, lastX = 0, lastY = 0;
+let lon = 0, lat = 0;
+let targetLon = 0, targetLat = 0;
+
+renderer.domElement.addEventListener('pointerdown', e => {
   isDragging = true;
-  lastX = e.clientX;
+  lastX = e.clientX; lastY = e.clientY;
   document.getElementById('hint').style.opacity = '0';
 });
-canvas.addEventListener('pointermove', e => {
+
+renderer.domElement.addEventListener('pointermove', e => {
   if (!isDragging) return;
-  const dx = e.clientX - lastX;
-  targetLon += dx * 0.15;
-  lastX = e.clientX;
+  targetLon += (e.clientX - lastX) * 0.25;
+  targetLat -= (e.clientY - lastY) * 0.15;
+  targetLat = Math.max(-40, Math.min(40, targetLat));
+  lastX = e.clientX; lastY = e.clientY;
 });
-canvas.addEventListener('pointerup', () => { isDragging = false; });
-canvas.addEventListener('pointerleave', () => { isDragging = false; });
 
-// Touch events for hotspot clicks (prevent canvas from eating them)
-document.getElementById('hsNext').addEventListener('pointerdown', e => { e.stopPropagation(); });
-document.getElementById('hsPrev').addEventListener('pointerdown', e => { e.stopPropagation(); });
+renderer.domElement.addEventListener('pointerup', () => { isDragging = false; });
+renderer.domElement.addEventListener('pointerleave', () => { isDragging = false; });
 
-// ===== GYROSCOPE =====
-window.toggleGyro = () => {
-  useGyro = !useGyro;
-  document.querySelector('#topbar .btn').textContent = useGyro ? '📱 陀螺仪:开' : '📱 陀螺仪';
-  if (useGyro) {
-    if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission().then(r => {
-        if (r === 'granted') window.addEventListener('deviceorientation', onOrientation);
-      }).catch(() => {});
-    } else {
-      window.addEventListener('deviceorientation', onOrientation);
-    }
-  } else {
-    window.removeEventListener('deviceorientation', onOrientation);
+// ===== VR MODE =====
+window.toggleVR = () => {
+  if (!('xr' in navigator) || !navigator.xr) {
+    alert('你的设备不支持 VR 模式');
+    return;
   }
+  navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+    if (supported) {
+      renderer.xr.getSession().then(s => renderer.xr.setSession(s));
+    } else {
+      alert('你的设备不支持沉浸式 VR');
+    }
+  }).catch(() => {});
 };
 
-function onOrientation(e) {
-  if (!useGyro || isDragging) return;
-  if (e.alpha !== null) targetLon = -(e.alpha - gyroBase) * 3;
-}
+// ===== GYROSCOPE (mobile) =====
+let gyroOn = false;
+window.addEventListener('deviceorientation', e => {
+  if (!gyroOn || isDragging) return;
+  if (e.alpha !== null) targetLon = -e.alpha;
+  if (e.beta !== null) targetLat = e.beta - 30;
+});
 
 // ===== RESIZE =====
 window.addEventListener('resize', () => {
@@ -238,24 +187,29 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ===== KEYBOARD =====
-window.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft') goPrev();
-  if (e.key === 'ArrowRight') goNext();
-});
-
-// ===== ANIMATION LOOP =====
+// ===== ANIMATE =====
 function animate() {
   requestAnimationFrame(animate);
-  // Smooth lerp towards target rotation
-  curLon += (targetLon - curLon) * 0.1;
-  camera.rotation.y = THREE.MathUtils.degToRad(curLon);
-  renderer.render(scene3d, camera);
+
+  // Smooth lerp
+  lon += (targetLon - lon) * 0.08;
+  lat += (targetLat - lat) * 0.08;
+
+  const phi = THREE.MathUtils.degToRad(90 - lat);
+  const theta = THREE.MathUtils.degToRad(lon);
+
+  // Look around from center
+  const r = 0.01;
+  const x = r * Math.sin(phi) * Math.sin(theta);
+  const y = r * Math.cos(phi);
+  const z = r * Math.sin(phi) * Math.cos(theta);
+  camera.lookAt(x, y + 1.5, z);
+
+  renderer.render(scene, camera);
 }
 
 // ===== START =====
-buildCylinder();
-loadScene(0);
+createRoom();
 animate();
 </script>
 </body>
