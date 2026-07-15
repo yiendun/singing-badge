@@ -3,399 +3,260 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>齐齐望过去 · 粤语童谣探索</title>
+<title>齐齐望过去 · 场景探索</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#000; overflow:hidden; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
+body { background:#000; overflow:hidden; font-family:'PingFang SC','Microsoft YaHei',sans-serif; touch-action:none; }
 canvas { display:block; }
 
-/* Loading */
 #loading {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background:#1a1a2e; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; z-index:100;
-  color:#fff; font-size:18px; transition:opacity 0.5s;
+  position:fixed; inset:0; background:#1a1a2e; display:flex;
+  flex-direction:column; align-items:center; justify-content:center;
+  z-index:100; color:#fff; font-size:18px; transition:opacity 0.5s;
 }
-#loading .spinner {
-  width:50px; height:50px; border:3px solid rgba(255,255,255,0.2);
-  border-top-color:#D4A843; border-radius:50%;
-  animation:spin 0.8s linear infinite; margin-bottom:16px;
-}
+#loading .spinner { width:50px; height:50px; border:3px solid rgba(255,255,255,0.2); border-top-color:#D4A843; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:16px; }
 @keyframes spin { to{transform:rotate(360deg)} }
 
-/* Hotspot label */
-.hotspot-label {
-  position:fixed; pointer-events:none; z-index:50;
-  color:#fff; font-size:14px; font-weight:700;
-  text-shadow:0 0 8px rgba(0,0,0,0.7);
+/* Hotspot */
+.hs-dot {
+  position:fixed; z-index:60; pointer-events:auto; cursor:pointer;
+  width:60px; height:60px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,215,0,0.7) 0%, rgba(255,215,0,0.2) 50%, transparent 70%);
   transform:translate(-50%,-50%);
-  text-align:center; opacity:0; transition:opacity 0.3s;
+  animation: hsPulse 1.8s ease-in-out infinite;
+  display:flex; align-items:center; justify-content:center;
 }
-.hotspot-label.visible { opacity:1; }
-.hotspot-label .dot {
-  display:block; width:16px; height:16px; border-radius:50%;
-  background:rgba(255,215,0,0.8); margin:0 auto 4px;
-  box-shadow:0 0 12px rgba(255,215,0,0.6);
-  animation:blink 1.5s ease-in-out infinite;
+.hs-dot::after {
+  content:''; width:16px; height:16px; border-radius:50%;
+  background:rgba(255,215,0,0.9); box-shadow:0 0 10px rgba(255,215,0,0.6);
 }
-@keyframes blink { 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+@keyframes hsPulse { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.3)} }
+
+.hs-label {
+  position:fixed; z-index:61; pointer-events:none;
+  color:#fff; font-size:15px; font-weight:700;
+  text-shadow:0 0 8px rgba(0,0,0,0.8);
+  transform:translate(-50%,-90px);
+  text-align:center; white-space:nowrap;
+}
 
 /* Top bar */
 #topbar {
-  position:fixed; top:0; left:0; right:0; z-index:60;
-  background:linear-gradient(rgba(0,0,0,0.6),transparent);
-  padding:12px 16px; display:flex; align-items:center; gap:10px;
+  position:fixed; top:0; left:0; right:0; z-index:70;
+  background:linear-gradient(rgba(0,0,0,0.5),transparent);
+  padding:14px 16px; display:flex; align-items:center; gap:12px;
 }
 #topbar .title { color:#fff; font-size:16px; font-weight:700; letter-spacing:2px; flex:1; }
 #topbar .btn {
   background:rgba(255,255,255,0.15); color:#fff; border:none;
-  padding:8px 16px; border-radius:20px; font-size:13px; cursor:pointer;
-  backdrop-filter:blur(4px);
+  padding:8px 14px; border-radius:20px; font-size:12px; cursor:pointer;
 }
 
 /* Bottom hint */
 #hint {
-  position:fixed; bottom:60px; left:50%; transform:translateX(-50%); z-index:60;
-  color:#fff; font-size:13px; background:rgba(0,0,0,0.5);
-  padding:8px 20px; border-radius:20px;
-  animation:fadeHint 3s ease-in-out infinite;
+  position:fixed; bottom:60px; left:50%; transform:translateX(-50%); z-index:70;
+  color:#fff; font-size:13px; background:rgba(0,0,0,0.45);
+  padding:8px 20px; border-radius:20px; transition:opacity 0.8s;
 }
-@keyframes fadeHint { 0%,100%{opacity:0.6} 50%{opacity:1} }
 
-/* Audio toast */
-#audioToast {
-  position:fixed; bottom:120px; left:50%; transform:translateX(-50%); z-index:70;
-  background:rgba(212,168,67,0.9); color:#fff;
-  padding:10px 24px; border-radius:25px; font-size:15px; font-weight:600;
-  pointer-events:none; opacity:0; transition:opacity 0.3s;
-}
-#audioToast.show { opacity:1; }
-
-/* Scene nav arrows */
-.scene-nav {
-  position:fixed; top:50%; transform:translateY(-50%); z-index:55;
-  width:44px; height:44px; border-radius:50%;
-  background:rgba(255,255,255,0.2); color:#fff;
-  border:none; font-size:22px; cursor:pointer;
+/* Navigation arrow */
+.nav-arrow {
+  position:fixed; top:50%; transform:translateY(-50%); z-index:65;
+  font-size:36px; color:rgba(255,255,255,0.7); pointer-events:auto; cursor:pointer;
+  width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,0.3);
   display:flex; align-items:center; justify-content:center;
-  backdrop-filter:blur(4px);
+  transition:all 0.3s;
 }
-#nav-prev { left:12px; }
-#nav-next { right:12px; }
+.nav-arrow:active { background:rgba(212,168,67,0.5); color:#fff; }
 
-/* Home button */
-#btnHome {
-  position:fixed; top:16px; left:16px; z-index:65;
-  width:40px; height:40px; border-radius:50%;
-  background:rgba(0,0,0,0.4); color:#fff;
-  border:none; font-size:20px; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
+/* Transition overlay */
+#transition {
+  position:fixed; inset:0; z-index:90; background:#000;
+  opacity:0; pointer-events:none; transition:opacity 0.6s;
 }
 </style>
 </head>
 <body>
-
 <div id="loading"><div class="spinner"></div>场景加载中...</div>
+<div id="transition"></div>
+<canvas id="c"></canvas>
 
+<!-- Top bar -->
 <div id="topbar">
-  <span class="title" id="sceneTitle">🏯 齐齐望过去</span>
-  <button class="btn" id="btnGyro" onclick="toggleGyro()">📱 陀螺仪</button>
-  <button class="btn" onclick="toggleAudio()">🔊</button>
+  <span class="title" id="sceneTitle">🐸 清溪 · 青蛙</span>
+  <button class="btn" onclick="toggleGyro()">📱 陀螺仪</button>
 </div>
 
-<button id="btnHome" onclick="goHome()">←</button>
-<button class="scene-nav" id="nav-prev" onclick="prevScene()">◀</button>
-<button class="scene-nav" id="nav-next" onclick="nextScene()">▶</button>
+<!-- Hotspots -->
+<div class="hs-dot" id="hsNext" style="right:8%;top:50%;" onclick="goNext()"></div>
+<div class="hs-label" id="hsNextLabel" style="right:8%;top:50%;">去看看小猪 🐷</div>
 
-<div id="hint">👆 拖动画面探索场景</div>
-<div id="audioToast"></div>
+<div class="hs-dot" id="hsPrev" style="left:8%;top:50%;display:none;" onclick="goPrev()"></div>
+<div class="hs-label" id="hsPrevLabel" style="left:8%;top:50%;display:none;">回去看青蛙 🐸</div>
 
-<!-- Hotspot labels container -->
-<div id="hsContainer"></div>
+<div id="hint">👈 拖动画面，点击光圈探索新场景</div>
 
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
 </script>
-
 <script type="module">
 import * as THREE from 'three';
 
 // ===== SCENE DATA =====
 const scenes = [
-  {
-    id: 'qingxi',
-    name: '🏞 清溪',
-    img: 'vr/1.jpg',
-    hotspots: [
-      { id:'frog', label:'🐸 青蛙', lat:10, lon:-20, audio:'audio/hotspot-frog.mp3' },
-      { id:'house', label:'🏠 小屋', lat:-5, lon:30, audio:'audio/hotspot-house.mp3' },
-    ]
-  },
-  {
-    id: 'hill',
-    name: '⛰ 山窿',
-    img: 'vr/2.jpg',
-    hotspots: [
-      { id:'lion', label:'🦁 狮子', lat:5, lon:15, audio:'audio/hotspot-lion.mp3' },
-    ]
-  }
+  { id:'frog', name:'🐸 清溪 · 青蛙', img:'vr/青蛙.jpg', next:1, prev:null },
+  { id:'pig',  name:'🐷 小屋 · 猪仔', img:'vr/小猪.jpg',  next:null, prev:0 },
 ];
+let currentIdx = 0;
 
-// ===== THREE.JS SETUP =====
-const container = document.body;
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+// ===== THREE.JS =====
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-container.appendChild(renderer.domElement);
+renderer.setClearColor(0x000000);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
-camera.position.set(0, 0, 0.1);
-
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 0);
 const scene3d = new THREE.Scene();
-const textureLoader = new THREE.TextureLoader();
+const loader = new THREE.TextureLoader();
 
-let currentSceneIdx = 0;
-let sphere = null;
-let isUserInteracting = false;
-let lon = 0, lat = 0;
-let prevLon = 0, prevLat = 0;
-let phi = 0, theta = 0;
+let cylinder = null;
+let texture = null;
+let curLon = 0, targetLon = 0;
+let isDragging = false, lastX = 0;
 let useGyro = false;
-let bgAudio = null;
-let hotspotAudio = null;
-let hotspotLabels = [];
+let gyroBase = 0;
 
-// ===== CREATE SPHERE =====
+// ===== CREATE SCENE =====
+function buildCylinder() {
+  if (cylinder) { scene3d.remove(cylinder); cylinder.geometry.dispose(); }
+  if (texture) texture.dispose();
+
+  // Cylinder arc covering ~120 degrees
+  const geom = new THREE.CylinderGeometry(8, 8, 6, 48, 1, true, THREE.MathUtils.degToRad(180), THREE.MathUtils.degToRad(220));
+  const mat = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+  cylinder = new THREE.Mesh(geom, mat);
+  cylinder.rotation.y = THREE.MathUtils.degToRad(20);
+  scene3d.add(cylinder);
+}
+
 function loadScene(idx) {
+  currentIdx = idx;
+  const data = scenes[idx];
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('loading').style.opacity = '1';
-  document.getElementById('sceneTitle').textContent = scenes[idx].name;
-  clearHotspotLabels();
+  document.getElementById('sceneTitle').textContent = data.name;
+  curLon = 0; targetLon = 0;
 
-  // Clean old sphere
-  if (sphere) { scene3d.remove(sphere); if (sphere.material) sphere.material.dispose(); }
+  updateNavUI();
 
-  textureLoader.load(scenes[idx].img, texture => {
-    const geometry = new THREE.SphereGeometry(50, 64, 32);
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
-      side: THREE.BackSide
-    });
-    sphere = new THREE.Mesh(geometry, material);
-    scene3d.add(sphere);
-
+  loader.load(data.img, tex => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    texture = tex;
+    if (!cylinder) buildCylinder();
+    cylinder.material.map = tex;
+    cylinder.material.needsUpdate = true;
     document.getElementById('loading').style.opacity = '0';
-    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
-
-    createHotspotLabels(idx);
-    updateNavButtons();
+    setTimeout(() => document.getElementById('loading').style.display = 'none', 500);
   });
 }
 
-// ===== HOTSPOTS =====
-function createHotspotLabels(idx) {
-  clearHotspotLabels();
-  const container = document.getElementById('hsContainer');
-  const hsList = scenes[idx].hotspots;
-
-  hsList.forEach((hs, i) => {
-    const el = document.createElement('div');
-    el.className = 'hotspot-label';
-    el.innerHTML = '<span class="dot"></span>' + hs.label;
-    el.addEventListener('click', () => onHotspotClick(hs));
-    el.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      onHotspotClick(hs);
-    });
-    container.appendChild(el);
-    hotspotLabels.push({ el, hs });
-  });
+function updateNavUI() {
+  const d = scenes[currentIdx];
+  document.getElementById('hsNext').style.display = d.next !== null ? 'flex' : 'none';
+  document.getElementById('hsNextLabel').style.display = d.next !== null ? 'block' : 'none';
+  document.getElementById('hsPrev').style.display = d.prev !== null ? 'flex' : 'none';
+  document.getElementById('hsPrevLabel').style.display = d.prev !== null ? 'block' : 'none';
 }
 
-function clearHotspotLabels() {
-  hotspotLabels = [];
-  document.getElementById('hsContainer').innerHTML = '';
+// ===== NAVIGATION =====
+function transitionTo(idx) {
+  const overlay = document.getElementById('transition');
+  overlay.style.opacity = '1';
+  setTimeout(() => {
+    loadScene(idx);
+    curLon = 0; targetLon = 0;
+    setTimeout(() => { overlay.style.opacity = '0'; }, 300);
+  }, 600);
 }
 
-function onHotspotClick(hs) {
-  showToast('🔊 ' + hs.label);
-  playHotspotAudio(hs.audio);
-}
+window.goNext = () => {
+  const next = scenes[currentIdx].next;
+  if (next !== null) transitionTo(next);
+};
+window.goPrev = () => {
+  const prev = scenes[currentIdx].prev;
+  if (prev !== null) transitionTo(prev);
+};
 
-function playHotspotAudio(src) {
-  if (hotspotAudio) { hotspotAudio.pause(); }
-  hotspotAudio = new Audio(src);
-  hotspotAudio.play().catch(() => {});
-}
+// ===== INPUT =====
+canvas.addEventListener('pointerdown', e => {
+  isDragging = true;
+  lastX = e.clientX;
+  document.getElementById('hint').style.opacity = '0';
+});
+canvas.addEventListener('pointermove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX;
+  targetLon += dx * 0.15;
+  lastX = e.clientX;
+});
+canvas.addEventListener('pointerup', () => { isDragging = false; });
+canvas.addEventListener('pointerleave', () => { isDragging = false; });
 
-function showToast(msg) {
-  const toast = document.getElementById('audioToast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
-}
+// Touch events for hotspot clicks (prevent canvas from eating them)
+document.getElementById('hsNext').addEventListener('pointerdown', e => { e.stopPropagation(); });
+document.getElementById('hsPrev').addEventListener('pointerdown', e => { e.stopPropagation(); });
 
-// ===== UPDATE HOTSPOT POSITIONS =====
-function updateHotspotPositions() {
-  hotspotLabels.forEach(({el, hs}) => {
-    const pos = latLonToScreen(hs.lat, hs.lon);
-    if (pos) {
-      el.style.left = pos.x + 'px';
-      el.style.top = pos.y + 'px';
-      el.classList.add('visible');
+// ===== GYROSCOPE =====
+window.toggleGyro = () => {
+  useGyro = !useGyro;
+  document.querySelector('#topbar .btn').textContent = useGyro ? '📱 陀螺仪:开' : '📱 陀螺仪';
+  if (useGyro) {
+    if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(r => {
+        if (r === 'granted') window.addEventListener('deviceorientation', onOrientation);
+      }).catch(() => {});
     } else {
-      el.classList.remove('visible');
+      window.addEventListener('deviceorientation', onOrientation);
     }
-  });
+  } else {
+    window.removeEventListener('deviceorientation', onOrientation);
+  }
+};
+
+function onOrientation(e) {
+  if (!useGyro || isDragging) return;
+  if (e.alpha !== null) targetLon = -(e.alpha - gyroBase) * 3;
 }
 
-function latLonToScreen(latDeg, lonDeg) {
-  const hw = window.innerWidth / 2;
-  const hh = window.innerHeight / 2;
-
-  // Convert current view angle + hotspot offset to direction vector
-  const latRad = THREE.MathUtils.degToRad(lat + latDeg);
-  const lonRad = THREE.MathUtils.degToRad(lon + lonDeg);
-
-  const x = Math.cos(latRad) * Math.sin(lonRad);
-  const y = Math.sin(latRad);
-  const z = Math.cos(latRad) * Math.cos(lonRad);
-
-  // Check if in front of camera
-  if (z < -0.1) return null;
-
-  // Project to screen
-  const sx = hw + (x / z) * hw;
-  const sy = hh + (-y / z) * hh;
-
-  if (sx < -100 || sx > window.innerWidth + 100 || sy < -100 || sy > window.innerHeight + 100) return null;
-
-  return { x: sx, y: sy };
-}
-
-// ===== INPUT HANDLING =====
-function onPointerDown(e) {
-  if (useGyro) return;
-  isUserInteracting = true;
-  prevLon = (e.clientX || e.touches?.[0]?.clientX || 0);
-  prevLat = (e.clientY || e.touches?.[0]?.clientY || 0);
-  document.getElementById('hint').style.display = 'none';
-}
-
-function onPointerMove(e) {
-  if (!isUserInteracting || useGyro) return;
-  const cx = e.clientX || e.touches?.[0]?.clientX || 0;
-  const cy = e.clientY || e.touches?.[0]?.clientY || 0;
-  lon += (cx - prevLon) * 0.3;
-  lat -= (cy - prevLat) * 0.3;
-  lat = Math.max(-60, Math.min(60, lat));
-  prevLon = cx;
-  prevLat = cy;
-}
-
-function onPointerUp() { isUserInteracting = false; }
-
-renderer.domElement.addEventListener('mousedown', onPointerDown);
-renderer.domElement.addEventListener('mousemove', onPointerMove);
-renderer.domElement.addEventListener('mouseup', onPointerUp);
-renderer.domElement.addEventListener('touchstart', onPointerDown, {passive:false});
-renderer.domElement.addEventListener('touchmove', onPointerMove, {passive:false});
-renderer.domElement.addEventListener('touchend', onPointerUp);
+// ===== RESIZE =====
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ===== GYROSCOPE =====
-function toggleGyro() {
-  useGyro = !useGyro;
-  document.getElementById('btnGyro').textContent = useGyro ? '📱 陀螺仪:开' : '📱 陀螺仪';
-  if (useGyro) {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission().then(r => {
-        if (r === 'granted') window.addEventListener('deviceorientation', onDeviceOrientation);
-      }).catch(() => {});
-    } else {
-      window.addEventListener('deviceorientation', onDeviceOrientation);
-    }
-  } else {
-    window.removeEventListener('deviceorientation', onDeviceOrientation);
-  }
-}
-
-function onDeviceOrientation(e) {
-  if (!useGyro) return;
-  if (e.alpha !== null) {
-    lon = -e.alpha;
-    lat = e.beta - 45;
-    lat = Math.max(-60, Math.min(60, lat));
-  }
-}
-
-// ===== SCENE NAVIGATION =====
-function nextScene() {
-  currentSceneIdx = (currentSceneIdx + 1) % scenes.length;
-  lon = 0; lat = 0;
-  loadScene(currentSceneIdx);
-}
-
-function prevScene() {
-  currentSceneIdx = (currentSceneIdx - 1 + scenes.length) % scenes.length;
-  lon = 0; lat = 0;
-  loadScene(currentSceneIdx);
-}
-
-function updateNavButtons() {
-  document.getElementById('nav-prev').style.display = scenes.length > 1 ? 'flex' : 'none';
-  document.getElementById('nav-next').style.display = scenes.length > 1 ? 'flex' : 'none';
-}
-
-function goHome() { window.location.href = 'index.html'; }
+// ===== KEYBOARD =====
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') goPrev();
+  if (e.key === 'ArrowRight') goNext();
+});
 
 // ===== ANIMATION LOOP =====
 function animate() {
   requestAnimationFrame(animate);
-
-  if (!isUserInteracting && !useGyro) {
-    // Auto-rotate slowly
-    lon += 0.03;
-  }
-
-  lat = Math.max(-60, Math.min(60, lat));
-
-  phi = THREE.MathUtils.degToRad(90 - lat);
-  theta = THREE.MathUtils.degToRad(lon);
-
-  const x = 0.1 * Math.sin(phi) * Math.cos(theta);
-  const y = 0.1 * Math.cos(phi);
-  const z = 0.1 * Math.sin(phi) * Math.sin(theta);
-  camera.lookAt(x, y, z);
-
-  updateHotspotPositions();
+  // Smooth lerp towards target rotation
+  curLon += (targetLon - curLon) * 0.1;
+  camera.rotation.y = THREE.MathUtils.degToRad(curLon);
   renderer.render(scene3d, camera);
 }
 
-// ===== BG AUDIO =====
-function toggleAudio() {
-  if (bgAudio && !bgAudio.paused) {
-    bgAudio.pause();
-  } else if (bgAudio) {
-    bgAudio.play();
-  }
-}
-
 // ===== START =====
+buildCylinder();
 loadScene(0);
 animate();
-
-// Export to window
-window.nextScene = nextScene;
-window.prevScene = prevScene;
-window.toggleGyro = toggleGyro;
-window.toggleAudio = toggleAudio;
-window.goHome = goHome;
 </script>
 </body>
 </html>
