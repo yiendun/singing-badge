@@ -68,7 +68,7 @@ body {
   box-shadow:0 4px 16px rgba(0,0,0,0.06); text-align:center;
   margin-bottom:16px;
 }
-.vocab-img { width:160px; height:160px; object-fit:contain; margin-bottom:12px; }
+.vocab-img { width:160px; height:160px; object-fit:contain; margin:0 auto 12px; display:block; }
 .vocab-word { font-size:36px; font-weight:900; color:var(--dark); letter-spacing:4px; }
 .vocab-counter { font-size:13px; color:#999; margin-top:6px; }
 .vocab-nav { display:flex; gap:16px; align-items:center; margin-bottom:20px; }
@@ -315,13 +315,9 @@ body {
   <div class="mode-choose" id="diffChooser4">
     <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐ 难度一</div>
     <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐ 难度二</div>
+    <div class="mode-btn" onclick="selectDifficulty(3)">⭐⭐⭐ 难度三</div>
   </div>
-  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:4px;margin-top:8px;">选择演唱模式：</p>
   <div class="lyric-mini" id="lyricDots4"></div>
-  <div class="mode-choose">
-    <div class="mode-btn selected" id="modeOriginal" onclick="selectMode('original')">🎵 跟唱原曲</div>
-    <div class="mode-btn" id="modeAccompany" onclick="selectMode('accompany')">🎹 伴奏演唱</div>
-  </div>
   <div class="record-section">
     <button class="btn-record" id="btnRecord4" onclick="toggleRecord4()">🎤</button>
     <div class="record-hint" id="recordHint4">点按录音，完整演唱</div>
@@ -374,8 +370,9 @@ const diffAudio = {
     2: { back:'audio/difficulty/齐齐望过去（难度2第三关接唱后半句.mp3', front:'audio/difficulty/齐齐望过去（难度2第三关接唱前半句.mp3' }
   },
   full: {
-    1: { original:'audio/full.mp3', accompany:'audio/difficulty/《齐齐望过去》难度1第四关原唱音量较小的伴奏.mp3' },
-    2: { original:'audio/full.mp3', accompany:'audio/difficulty/齐齐望过去（难度2第四关伴奏演唱.mp3' }
+    1: 'audio/difficulty/齐齐望过去（第四关难度1.mp3',
+    2: 'audio/difficulty/《齐齐望过去》难度1第四关难度2.mp3',
+    3: 'audio/difficulty/齐齐望过去（难度2第四关难度3.mp3'
   }
 };
 
@@ -887,6 +884,7 @@ function showStep3() {
   showPage('page-echo');
   updateAllFragments();
   echoRound = 0;
+  if (difficulty > 2) difficulty = 1;
   document.getElementById('btnDoneEcho').style.display = 'none';
   document.getElementById('btnPlay3').style.display = 'inline-block';
   // Reset difficulty selector
@@ -992,9 +990,6 @@ function showStep4() {
   updateAllFragments();
   document.getElementById('btnDoneFull').style.display = 'none';
   document.getElementById('btnPlay4').textContent = '▶ 播放音乐';
-  fullSongMode = 'original';
-  document.getElementById('modeOriginal').classList.add('selected');
-  document.getElementById('modeAccompany').classList.remove('selected');
   // Reset difficulty selector
   const c4 = document.getElementById('diffChooser4');
   if (c4) c4.querySelectorAll('.mode-btn').forEach((b,i) => b.classList.toggle('selected', i+1 === difficulty));
@@ -1014,6 +1009,14 @@ function showStep4() {
 
 function selectDifficulty(diff) {
   difficulty = diff;
+  // Stop current audio immediately so next play uses new difficulty
+  stopAllAudio();
+  const onPage = document.querySelector('.page.active');
+  if (onPage) {
+    const pid = onPage.id;
+    if (pid === 'page-echo') { document.getElementById('btnPlay3').textContent = '▶ 播放接唱音乐'; }
+    if (pid === 'page-full') { document.getElementById('btnPlay4').textContent = '▶ 播放音乐'; }
+  }
   // Update step 3 chooser if visible
   const c3 = document.getElementById('diffChooser3');
   if (c3) c3.querySelectorAll('.mode-btn').forEach((b,i) => b.classList.toggle('selected', i+1 === diff));
@@ -1042,8 +1045,7 @@ function togglePlay4() {
     return;
   }
   stopAllAudio();
-  const d = diffAudio.full[difficulty];
-  const audioFile = fullSongMode === 'original' ? d.original : d.accompany;
+  const audioFile = diffAudio.full[difficulty];
   currentAudio = new Audio(audioFile);
   let lastIdx = -1;
   // Show cover first
