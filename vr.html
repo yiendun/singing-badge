@@ -50,12 +50,12 @@ canvas { display:block; position:fixed; top:0; left:0; width:100%; height:100%; 
 
 /* ===== Music Note Button ===== */
 #music-btn {
-  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:85;
-  width:64px; height:64px; border-radius:50%; cursor:pointer;
+  position:fixed; top:80px; right:20px; z-index:85;
+  width:52px; height:52px; border-radius:50%; cursor:pointer;
   background:rgba(212,168,67,0.8); border:2px solid rgba(255,255,255,0.5);
   display:flex; align-items:center; justify-content:center;
-  font-size:28px; box-shadow:0 0 24px rgba(212,168,67,0.4);
-  animation: noteFloat 2s ease-in-out infinite;
+  font-size:24px; box-shadow:0 0 20px rgba(212,168,67,0.4);
+  animation: noteFloat 2.5s ease-in-out infinite;
   -webkit-tap-highlight-color:transparent;
 }
 #music-btn.playing {
@@ -63,12 +63,12 @@ canvas { display:block; position:fixed; top:0; left:0; width:100%; height:100%; 
   animation: notePulse 0.6s ease-in-out infinite;
 }
 @keyframes noteFloat {
-  0%,100%{ transform:translate(-50%,-50%) translateY(0); }
-  50%{ transform:translate(-50%,-50%) translateY(-8px); }
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-6px); }
 }
 @keyframes notePulse {
-  0%,100%{ transform:translate(-50%,-50%) scale(1); }
-  50%{ transform:translate(-50%,-50%) scale(1.15); }
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.15); }
 }
 </style>
 </head>
@@ -89,10 +89,10 @@ import * as THREE from 'three';
 
 // ===== SCENE DATA =====
 const scenes = [
-  { id:'frog',  label:'青蛙', icon:'🐸', img:'vr/青蛙.jpg' },
-  { id:'lion',  label:'狮子', icon:'🦁', img:'vr/狮子.jpg' },
-  { id:'myna',  label:'鹩哥', icon:'🐦', img:'vr/鹩哥.jpg' },
-  { id:'pig',   label:'小猪', icon:'🐷', img:'vr/小猪.jpg' },
+  { id:'frog',  label:'青蛙', icon:'🐸', img:'vr/青蛙.jpg', audio:'vr/青蛙.mp3' },
+  { id:'pig',   label:'小猪', icon:'🐷', img:'vr/小猪.jpg', audio:'vr/小猪.mp3' },
+  { id:'myna',  label:'鹩哥', icon:'🐦', img:'vr/鹩哥.jpg', audio:'vr/鹩哥.mp3' },
+  { id:'lion',  label:'狮子', icon:'🦁', img:'vr/狮子.jpg', audio:'vr/狮子.mp3' },
 ];
 
 // ===== THREE.JS =====
@@ -272,12 +272,12 @@ function animate() {
   renderer.render(scene3d, camera);
 }
 
-// ===== AUDIO =====
+// ===== AUDIO (Per-Scene) =====
 let audioCtx = null;
 let audioSrc = null;
 let gainNode = null;
 let musicPlaying = false;
-let fadeTimer = null;
+let currentAudioScene = 0;
 
 function initAudio() {
   if (!audioCtx) {
@@ -287,53 +287,53 @@ function initAudio() {
   }
 }
 
-function fadeOut(duration = 1.5) {
-  if (!gainNode) return;
-  const start = gainNode.gain.value;
-  const t0 = audioCtx.currentTime;
-  gainNode.gain.cancelScheduledValues(t0);
-  gainNode.gain.setValueAtTime(start, t0);
-  gainNode.gain.linearRampToValueAtTime(0, t0 + duration);
-  clearTimeout(fadeTimer);
-  fadeTimer = setTimeout(() => {
-    if (audioSrc) { audioSrc.stop(); audioSrc = null; }
-    musicPlaying = false;
-    updateMusicBtn();
-  }, duration * 1000 + 200);
+function stopAllAudio() {
+  if (audioSrc) { try { audioSrc.stop(); } catch(e) {} audioSrc = null; }
+  musicPlaying = false;
 }
 
-function playMusic() {
+function fadeOut(duration = 1.2) {
+  if (!gainNode || !musicPlaying) return;
+  const t0 = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(t0);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, t0);
+  gainNode.gain.linearRampToValueAtTime(0, t0 + duration);
+  setTimeout(() => { stopAllAudio(); updateMusicBtn(); }, duration * 1000 + 100);
+}
+
+function playCurrentSceneAudio() {
   initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+  stopAllAudio();
 
-  // Stop any previous audio
-  if (audioSrc) { try { audioSrc.stop(); } catch(e) {} audioSrc = null; }
-  clearTimeout(fadeTimer);
-
-  // Use the full song as background
-  fetch('audio/full.mp3').then(r => r.arrayBuffer()).then(buf => {
+  const audioUrl = scenes[currentScene].audio;
+  fetch(audioUrl).then(r => r.arrayBuffer()).then(buf => {
     audioCtx.decodeAudioData(buf, decoded => {
+      if (currentScene !== currentAudioScene) {
+        // Scene changed while loading, don't play
+        return;
+      }
       audioSrc = audioCtx.createBufferSource();
       audioSrc.buffer = decoded;
-      audioSrc.loop = true;
+      audioSrc.loop = false;
+      audioSrc.onended = () => { musicPlaying = false; updateMusicBtn(); };
       audioSrc.connect(gainNode);
       gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
       gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 1.0);
+      gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.5);
       audioSrc.start(0);
       musicPlaying = true;
+      currentAudioScene = currentScene;
       updateMusicBtn();
     });
-  }).catch(() => {
-    alert('音乐加载失败');
-  });
+  }).catch(() => {});
 }
 
 function toggleMusic() {
   if (musicPlaying) {
-    fadeOut(1.5);
+    fadeOut(1.2);
   } else {
-    playMusic();
+    playCurrentSceneAudio();
   }
 }
 window.toggleMusic = toggleMusic;
@@ -344,11 +344,12 @@ function updateMusicBtn() {
   btn.classList.toggle('playing', musicPlaying);
 }
 
-// Override goTo to fade music
+// Override goTo: fade out music, change scene, optionally auto-play new audio
 const _goTo = goTo;
 goTo = function(idx) {
-  if (musicPlaying) fadeOut(1.0);
+  if (musicPlaying) fadeOut(0.8);
   _goTo(idx);
+  currentAudioScene = idx;
 };
 window.goTo = goTo;
 
