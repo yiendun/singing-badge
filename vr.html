@@ -272,66 +272,78 @@ function animate() {
   renderer.render(scene3d, camera);
 }
 
-// ===== AUDIO (Per-Scene) =====
-let audioCtx = null;
-let audioSrc = null;
-let gainNode = null;
-let musicPlaying = false;
-let currentAudioScene = 0;
+// ===== AUDIO (Simple HTML5 Audio) =====
+let audioEl = null;
+let fadeInterval = null;
 
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    gainNode = audioCtx.createGain();
-    gainNode.connect(audioCtx.destination);
+function getAudio() {
+  if (!audioEl) {
+    audioEl = new Audio();
+    audioEl.preload = 'auto';
+    audioEl.onended = () => { musicPlaying = false; updateMusicBtn(); };
+    audioEl.onerror = () => { musicPlaying = false; updateMusicBtn(); };
+    audioEl.oncanplaythrough = () => { /* ready */ };
   }
+  return audioEl;
 }
 
-function stopAllAudio() {
-  if (audioSrc) { try { audioSrc.stop(); } catch(e) {} audioSrc = null; }
+let musicPlaying = false;
+
+function stopFade() {
+  if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+}
+
+function fadeOut(duration = 1.0) {
+  stopFade();
+  const a = getAudio();
+  if (!musicPlaying || a.paused) { stopAudio(); return; }
+  const startVol = a.volume;
+  const steps = 20;
+  const interval = (duration * 1000) / steps;
+  let step = 0;
+  fadeInterval = setInterval(() => {
+    step++;
+    a.volume = Math.max(0, startVol * (1 - step / steps));
+    if (step >= steps) {
+      stopFade();
+      stopAudio();
+    }
+  }, interval);
+}
+
+function stopAudio() {
+  stopFade();
+  const a = getAudio();
+  a.pause();
+  a.currentTime = 0;
+  a.volume = 0.6;
   musicPlaying = false;
-}
-
-function fadeOut(duration = 1.2) {
-  if (!gainNode || !musicPlaying) return;
-  const t0 = audioCtx.currentTime;
-  gainNode.gain.cancelScheduledValues(t0);
-  gainNode.gain.setValueAtTime(gainNode.gain.value, t0);
-  gainNode.gain.linearRampToValueAtTime(0, t0 + duration);
-  setTimeout(() => { stopAllAudio(); updateMusicBtn(); }, duration * 1000 + 100);
+  updateMusicBtn();
 }
 
 function playCurrentSceneAudio() {
-  initAudio();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  stopAllAudio();
+  stopFade();
+  const a = getAudio();
+  stopAudio();
 
   const audioUrl = scenes[currentScene].audio;
-  fetch(audioUrl).then(r => r.arrayBuffer()).then(buf => {
-    audioCtx.decodeAudioData(buf, decoded => {
-      if (currentScene !== currentAudioScene) {
-        // Scene changed while loading, don't play
-        return;
-      }
-      audioSrc = audioCtx.createBufferSource();
-      audioSrc.buffer = decoded;
-      audioSrc.loop = false;
-      audioSrc.onended = () => { musicPlaying = false; updateMusicBtn(); };
-      audioSrc.connect(gainNode);
-      gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.5);
-      audioSrc.start(0);
-      musicPlaying = true;
-      currentAudioScene = currentScene;
-      updateMusicBtn();
-    });
-  }).catch(() => {});
+  a.src = audioUrl;
+  a.volume = 0.6;
+  a.load();
+  a.play().then(() => {
+    musicPlaying = true;
+    updateMusicBtn();
+  }).catch(e => {
+    console.log('Audio play failed:', e);
+    // Retry on user gesture
+    musicPlaying = false;
+    updateMusicBtn();
+  });
 }
 
 function toggleMusic() {
   if (musicPlaying) {
-    fadeOut(1.2);
+    fadeOut(0.8);
   } else {
     playCurrentSceneAudio();
   }
@@ -344,12 +356,12 @@ function updateMusicBtn() {
   btn.classList.toggle('playing', musicPlaying);
 }
 
-// Override goTo: fade out music, change scene, optionally auto-play new audio
+// Override goTo
 const _goTo = goTo;
 goTo = function(idx) {
-  if (musicPlaying) fadeOut(0.8);
+  if (musicPlaying) fadeOut(0.6);
+  else stopAudio();
   _goTo(idx);
-  currentAudioScene = idx;
 };
 window.goTo = goTo;
 
