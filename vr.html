@@ -84,17 +84,14 @@ camera.position.set(0, 0, 0);
 const loader = new THREE.TextureLoader();
 
 // ===== BUILD CURVED GALLERY =====
-const R = 6;       // Cylinder radius
-const H = 6.5;     // Cylinder height - tall enough to fill mobile screen
+const R = 5;       // Cylinder radius
+const H = 8;       // Tall cylinder fills vertical space
 
-let cylinder = null;
 const textures = [];
 
 function loadAll() {
   let loaded = 0;
   const total = scenes.length;
-
-  // Load textures
   const promises = scenes.map((s, i) => new Promise(resolve => {
     loader.load(s.img, tex => {
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -107,40 +104,37 @@ function loadAll() {
       resolve();
     });
   }));
-
-  // Build cylinder once textures are ready
-  Promise.all(promises).then(() => buildCylinder());
+  Promise.all(promises).then(() => buildRoom());
 }
 
-function buildCylinder() {
-  // Create cylinder segments, one per scene
-  // Each scene occupies 90° of the 360° cylinder
+function buildRoom() {
   const total = scenes.length;
   const segAngle = (Math.PI * 2) / total;
 
-  // Ground and sky (simple gradient colors)
-  const floorGeom = new THREE.CylinderGeometry(R-0.05, R-0.05, H*0.1, 64);
-  const floorMat = new THREE.MeshBasicMaterial({ color: 0x3d2c1e, side: THREE.DoubleSide });
-  const floor = new THREE.Mesh(floorGeom, floorMat);
-  floor.position.y = -H/2 - H*0.05;
-  scene3d.add(floor);
-
-  const ceilGeom = new THREE.CylinderGeometry(R-0.05, R-0.05, H*0.1, 64);
-  const ceilMat = new THREE.MeshBasicMaterial({ color: 0x1a1510, side: THREE.DoubleSide });
-  const ceil = new THREE.Mesh(ceilGeom, ceilMat);
-  ceil.position.y = H/2 + H*0.05;
-  scene3d.add(ceil);
-
-  // Wall segments
+  // Wall segments - each image on a 90° arc
   for (let i = 0; i < total; i++) {
     const geom = new THREE.CylinderGeometry(R, R, H, 32, 1, true, i * segAngle, segAngle);
-    const mat = new THREE.MeshBasicMaterial({ map: textures[i], side: THREE.BackSide, transparent: false });
+    const mat = new THREE.MeshBasicMaterial({ map: textures[i], side: THREE.BackSide });
     const seg = new THREE.Mesh(geom, mat);
-    seg.name = 'seg-' + i;
     scene3d.add(seg);
   }
 
-  // Build navigation
+  // Bottom cap
+  const bGeom = new THREE.CircleGeometry(R, 48);
+  const bMat = new THREE.MeshBasicMaterial({ color: 0x1a1210, side: THREE.DoubleSide });
+  const bottom = new THREE.Mesh(bGeom, bMat);
+  bottom.rotation.x = -Math.PI / 2;
+  bottom.position.y = -H/2;
+  scene3d.add(bottom);
+
+  // Top cap
+  const tGeom = new THREE.CircleGeometry(R, 48);
+  const tMat = new THREE.MeshBasicMaterial({ color: 0x0d0a06, side: THREE.DoubleSide });
+  const top = new THREE.Mesh(tGeom, tMat);
+  top.rotation.x = Math.PI / 2;
+  top.position.y = H/2;
+  scene3d.add(top);
+
   buildNav();
 }
 
@@ -180,16 +174,15 @@ let currentScene = 0;
 
 function goTo(idx) {
   currentScene = idx;
-  // Calculate target angle: each scene center at i * 90° + 45° offset
-  const segAngle = 360 / scenes.length;
-  targetLon = -(idx * segAngle + segAngle/2);
+  // Map: scene 0 at +45°, scene 1 at -45°, scene 2 at -135°, scene 3 at +135°
+  targetLon = 45 - idx * 90;
   updateNavHighlight(idx);
 }
 window.goTo = goTo;
 
 // ===== INPUT =====
 let isDragging = false, lastX = 0, lastY = 0;
-let lon = -(360 / scenes.length / 2), targetLon = lon; // Start at first scene
+let lon = 45, targetLon = 45; // Start at first scene (frog)
 let lat = 0, targetLat = 0;
 
 renderer.domElement.addEventListener('pointerdown', e => {
