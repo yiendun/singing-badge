@@ -272,73 +272,73 @@ function animate() {
   renderer.render(scene3d, camera);
 }
 
-// ===== AUDIO (Simple HTML5 Audio) =====
+// ===== AUDIO =====
 let audioEl = null;
-let fadeInterval = null;
+let fadeTimer = null;
+let musicPlaying = false;
 
 function getAudio() {
   if (!audioEl) {
     audioEl = new Audio();
     audioEl.preload = 'auto';
-    audioEl.onended = () => { musicPlaying = false; updateMusicBtn(); };
-    audioEl.onerror = () => { musicPlaying = false; updateMusicBtn(); };
-    audioEl.oncanplaythrough = () => { /* ready */ };
   }
   return audioEl;
 }
 
-let musicPlaying = false;
-
-function stopFade() {
-  if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
-}
-
-function fadeOut(duration = 1.0) {
-  stopFade();
-  const a = getAudio();
-  if (!musicPlaying || a.paused) { stopAudio(); return; }
-  const startVol = a.volume;
-  const steps = 20;
-  const interval = (duration * 1000) / steps;
-  let step = 0;
-  fadeInterval = setInterval(() => {
-    step++;
-    a.volume = Math.max(0, startVol * (1 - step / steps));
-    if (step >= steps) {
-      stopFade();
-      stopAudio();
-    }
-  }, interval);
-}
-
 function stopAudio() {
-  stopFade();
+  if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
   const a = getAudio();
+  a.onended = null;
+  a.onerror = null;
   a.pause();
   a.currentTime = 0;
-  a.volume = 0.6;
   musicPlaying = false;
   updateMusicBtn();
 }
 
-function playCurrentSceneAudio() {
-  stopFade();
+function fadeOut(dur) {
+  if (!musicPlaying) return;
   const a = getAudio();
-  stopAudio();
+  if (a.paused || a.readyState === 0) { stopAudio(); return; }
+  if (fadeTimer) clearInterval(fadeTimer);
+  const sv = a.volume;
+  const steps = 15;
+  const ival = (dur * 1000) / steps;
+  let n = 0;
+  fadeTimer = setInterval(() => {
+    n++;
+    a.volume = Math.max(0, sv * (1 - n / steps));
+    if (n >= steps) { clearInterval(fadeTimer); fadeTimer = null; stopAudio(); }
+  }, ival);
+}
 
-  const audioUrl = scenes[currentScene].audio;
-  a.src = audioUrl;
+function playCurrentSceneAudio() {
+  const a = getAudio();
+  // Clean up previous
+  a.onended = null;
+  a.onerror = null;
+  if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+  a.pause();
+
+  const url = scenes[currentScene].audio;
+  a.src = url;
   a.volume = 0.6;
+  musicPlaying = false;
+  updateMusicBtn();
+
+  a.oncanplaythrough = () => {
+    a.oncanplaythrough = null;
+    a.play().then(() => {
+      musicPlaying = true;
+      updateMusicBtn();
+    }).catch(() => {
+      musicPlaying = false;
+      updateMusicBtn();
+    });
+  };
+  a.onended = () => { musicPlaying = false; updateMusicBtn(); };
+  a.onerror = () => { musicPlaying = false; updateMusicBtn(); };
   a.load();
-  a.play().then(() => {
-    musicPlaying = true;
-    updateMusicBtn();
-  }).catch(e => {
-    console.log('Audio play failed:', e);
-    // Retry on user gesture
-    musicPlaying = false;
-    updateMusicBtn();
-  });
 }
 
 function toggleMusic() {
@@ -352,11 +352,11 @@ window.toggleMusic = toggleMusic;
 
 function updateMusicBtn() {
   const btn = document.getElementById('music-btn');
+  if (!btn) return;
   btn.textContent = musicPlaying ? '🎶' : '🎵';
   btn.classList.toggle('playing', musicPlaying);
 }
 
-// Override goTo
 const _goTo = goTo;
 goTo = function(idx) {
   if (musicPlaying) fadeOut(0.6);
