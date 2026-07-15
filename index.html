@@ -69,7 +69,7 @@ body {
   margin-bottom:16px;
 }
 .vocab-img { width:160px; height:160px; object-fit:contain; margin:0 auto 12px; display:block; }
-.vocab-word { font-size:36px; font-weight:900; color:var(--dark); letter-spacing:4px; }
+.vocab-word { font-size:22px; font-weight:900; color:var(--dark); letter-spacing:3px; }
 .vocab-counter { font-size:13px; color:#999; margin-top:6px; }
 .vocab-nav { display:flex; gap:16px; align-items:center; margin-bottom:20px; }
 .vocab-nav button { background:#fff; border:2px solid #eee; border-radius:50%; width:44px; height:44px; font-size:20px; cursor:pointer; }
@@ -99,9 +99,9 @@ body {
 /* ===== Step 4: Full Song ===== */
 .mode-choose { display:flex; gap:12px; margin-bottom:16px; width:100%; }
 .mode-btn {
-  flex:1; padding:16px; border-radius:16px; border:3px solid #eee;
+  flex:1; padding:12px 8px; border-radius:16px; border:3px solid #eee;
   background:#fff; text-align:center; cursor:pointer; transition:all 0.2s;
-  font-size:16px; font-weight:700;
+  font-size:14px; font-weight:700; line-height:1.4;
 }
 .mode-btn.selected { border-color:var(--red); background:#FFF5F5; }
 
@@ -287,8 +287,8 @@ body {
   <p style="font-size:14px;color:#888;text-align:center;margin-bottom:4px;" id="echoHint">🎧 仔细听，音乐停了就轮到你唱！</p>
   <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">选择难度：</p>
   <div class="mode-choose" id="diffChooser3">
-    <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐ 难度一</div>
-    <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐ 难度二</div>
+    <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐<br>难度一</div>
+    <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐<br>难度二</div>
   </div>
   <div class="record-section">
     <button class="btn-record" id="btnRecord3" onclick="toggleRecord3()">🎤</button>
@@ -313,9 +313,9 @@ body {
   </div>
   <p style="font-size:13px;color:#888;text-align:center;margin-bottom:4px;">选择难度：</p>
   <div class="mode-choose" id="diffChooser4">
-    <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐ 难度一</div>
-    <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐ 难度二</div>
-    <div class="mode-btn" onclick="selectDifficulty(3)">⭐⭐⭐ 难度三</div>
+    <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐<br>难度一</div>
+    <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐<br>难度二</div>
+    <div class="mode-btn" onclick="selectDifficulty(3)">⭐⭐⭐<br>难度三</div>
   </div>
   <div class="lyric-mini" id="lyricDots4"></div>
   <div class="record-section">
