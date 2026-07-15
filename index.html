@@ -233,6 +233,7 @@ body {
     <div class="fragments-mini" id="fragMini1"></div>
   </div>
   <div class="vocab-card" id="vocabCard">
+    <video class="vocab-img" id="vocabVideo" style="display:none;" playsinline loop muted></video>
     <img class="vocab-img" id="vocabImg" src="" alt="" loading="lazy">
     <div class="vocab-word" id="vocabWord"></div>
     <div class="vocab-counter" id="vocabCounter"></div>
@@ -283,7 +284,12 @@ body {
     <img id="animalImg3" src="" alt="">
     <div class="animal-label" id="animalLabel3">听前半句，接唱后半句</div>
   </div>
-  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:8px;" id="echoHint">🎧 仔细听，音乐停了就轮到你唱！</p>
+  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:4px;" id="echoHint">🎧 仔细听，音乐停了就轮到你唱！</p>
+  <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">选择难度：</p>
+  <div class="mode-choose" id="diffChooser3">
+    <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐ 难度一</div>
+    <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐ 难度二</div>
+  </div>
   <div class="record-section">
     <button class="btn-record" id="btnRecord3" onclick="toggleRecord3()">🎤</button>
     <div class="record-hint" id="recordHint3">播放后自动开始录音</div>
@@ -305,7 +311,12 @@ body {
     <img id="animalImg4" src="images/phone/青蛙.jpg" alt="" style="width:100%;height:100%;object-fit:cover;">
     <div class="animal-label" id="animalLabel4">🎤 完整演唱《齐齐望过去》</div>
   </div>
-  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:8px;">选择演唱模式：</p>
+  <p style="font-size:13px;color:#888;text-align:center;margin-bottom:4px;">选择难度：</p>
+  <div class="mode-choose" id="diffChooser4">
+    <div class="mode-btn selected" onclick="selectDifficulty(1)">⭐ 难度一</div>
+    <div class="mode-btn" onclick="selectDifficulty(2)">⭐⭐ 难度二</div>
+  </div>
+  <p style="font-size:14px;color:#888;text-align:center;margin-bottom:4px;margin-top:8px;">选择演唱模式：</p>
   <div class="lyric-mini" id="lyricDots4"></div>
   <div class="mode-choose">
     <div class="mode-btn selected" id="modeOriginal" onclick="selectMode('original')">🎵 跟唱原曲</div>
@@ -345,16 +356,28 @@ body {
 <script>
 // ===== DATA =====
 const vocabList = [
-  { word:'望过去', img:'images/vocab/望过去.png' },
-  { word:'清溪',   img:'images/vocab/清溪.png' },
-  { word:'青蛙',   img:'images/vocab/青蛙.png' },
-  { word:'小屋',   img:'images/vocab/小屋.png' },
-  { word:'猪仔',   img:'images/vocab/猪仔.png' },
-  { word:'鹩哥',   img:'images/vocab/鹩哥.png' },
-  { word:'驳嘴',   img:'images/vocab/驳嘴.png' },
-  { word:'山窿',   img:'images/vocab/山窿.png' },
-  { word:'狮子',   img:'images/vocab/狮子.png' },
+  { word:'望过去', src:'images/vocab-new/1.望过去.mp4', type:'video' },
+  { word:'清溪',   src:'images/vocab-new/2.清溪.mp4', type:'video' },
+  { word:'青蛙',   src:'images/vocab-new/3.青蛙.png', type:'image' },
+  { word:'小屋',   src:'images/vocab-new/4.小屋.png', type:'image' },
+  { word:'猪仔',   src:'images/vocab-new/5.猪仔.png', type:'image' },
+  { word:'鹩哥',   src:'images/vocab-new/6.鹩哥.png', type:'image' },
+  { word:'驳嘴',   src:'images/vocab-new/7.驳嘴.mp4', type:'video' },
+  { word:'山隆',   src:'images/vocab-new/8.山隆.png', type:'image' },
+  { word:'狮子',   src:'images/vocab-new/9.狮子.png', type:'image' },
 ];
+
+// Difficulty audio mapping for steps 3 & 4
+const diffAudio = {
+  echo: {
+    1: { back:'audio/difficulty/《齐齐望过去》难度1第三关接唱后半句.mp3', front:'audio/difficulty/《齐齐望过去》难度1第三关接唱前半句.mp3' },
+    2: { back:'audio/difficulty/齐齐望过去（难度2第三关接唱后半句.mp3', front:'audio/difficulty/齐齐望过去（难度2第三关接唱前半句.mp3' }
+  },
+  full: {
+    1: { original:'audio/full.mp3', accompany:'audio/difficulty/《齐齐望过去》难度1第四关原唱音量较小的伴奏.mp3' },
+    2: { original:'audio/full.mp3', accompany:'audio/difficulty/齐齐望过去（难度2第四关伴奏演唱.mp3' }
+  }
+};
 
 const lyricLines = [
   { text:'齐齐望过去，清溪里有只青蛙想跳水', animal:'青蛙', img:'images/phone/青蛙.jpg' },
@@ -372,6 +395,7 @@ let currentVocab = 0;
 let vocabRecorded = new Array(9).fill(false);
 let echoRound = 0; // 0 = sing back half, 1 = sing front half
 let fullSongMode = 'original'; // 'original' | 'accompany'
+let difficulty = 1; // 1 or 2 for steps 3 & 4
 
 // Audio & Recording
 let currentAudio = null;
@@ -693,6 +717,7 @@ function startChallenge() {
   vocabRecorded = new Array(9).fill(false);
   echoRound = 0;
   fullSongMode = 'original';
+  difficulty = 1;
   updateAllFragments();
   // Go to step 1
   showStep1();
@@ -712,7 +737,19 @@ function showStep1() {
 
 function updateVocabUI() {
   const v = vocabList[currentVocab];
-  document.getElementById('vocabImg').src = v.img;
+  const img = document.getElementById('vocabImg');
+  const video = document.getElementById('vocabVideo');
+  if (v.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.src = v.src;
+    video.play().catch(() => {});
+  } else {
+    video.style.display = 'none';
+    video.pause();
+    img.style.display = 'block';
+    img.src = v.src;
+  }
   document.getElementById('vocabWord').textContent = v.word;
   document.getElementById('vocabCounter').textContent = (currentVocab + 1) + ' / ' + vocabList.length;
   document.getElementById('btnPrevVocab').disabled = (currentVocab === 0);
@@ -852,6 +889,9 @@ function showStep3() {
   echoRound = 0;
   document.getElementById('btnDoneEcho').style.display = 'none';
   document.getElementById('btnPlay3').style.display = 'inline-block';
+  // Reset difficulty selector
+  const c3 = document.getElementById('diffChooser3');
+  if (c3) c3.querySelectorAll('.mode-btn').forEach((b,i) => b.classList.toggle('selected', i+1 === difficulty));
   updateEchoUI();
 }
 
@@ -880,9 +920,9 @@ function togglePlay3() {
     return;
   }
   stopAllAudio();
-  // First round: 接唱后半句 (audio has first half, child sings second half)
-  // Second round: 接唱前半句 (audio has second half, child sings first half)
-  const audioFile = echoRound === 0 ? 'audio/echo-front.mp3' : 'audio/echo-back.mp3';
+  // Pick difficulty audio: round 0 = 接唱后半句, round 1 = 接唱前半句
+  const d = diffAudio.echo[difficulty];
+  const audioFile = echoRound === 0 ? d.back : d.front;
   currentAudio = new Audio(audioFile);
   let lastIdx = -1;
   // Show cover first
@@ -955,6 +995,9 @@ function showStep4() {
   fullSongMode = 'original';
   document.getElementById('modeOriginal').classList.add('selected');
   document.getElementById('modeAccompany').classList.remove('selected');
+  // Reset difficulty selector
+  const c4 = document.getElementById('diffChooser4');
+  if (c4) c4.querySelectorAll('.mode-btn').forEach((b,i) => b.classList.toggle('selected', i+1 === difficulty));
   // Build lyric dots
   const dots = document.getElementById('lyricDots4');
   dots.innerHTML = '';
@@ -967,6 +1010,16 @@ function showStep4() {
   document.getElementById('animalImg4').src = 'images/cover/step4.png';
   document.getElementById('animalLabel4').textContent = '🌟 第四关 · 完整演唱';
   document.querySelectorAll('#lyricDots4 .lyric-dot').forEach(d => d.classList.remove('active'));
+}
+
+function selectDifficulty(diff) {
+  difficulty = diff;
+  // Update step 3 chooser if visible
+  const c3 = document.getElementById('diffChooser3');
+  if (c3) c3.querySelectorAll('.mode-btn').forEach((b,i) => b.classList.toggle('selected', i+1 === diff));
+  // Update step 4 chooser if visible
+  const c4 = document.getElementById('diffChooser4');
+  if (c4) c4.querySelectorAll('.mode-btn').forEach((b,i) => b.classList.toggle('selected', i+1 === diff));
 }
 
 function selectMode(mode) {
@@ -989,7 +1042,8 @@ function togglePlay4() {
     return;
   }
   stopAllAudio();
-  const audioFile = fullSongMode === 'original' ? 'audio/full.mp3' : 'audio/accompany.mp3';
+  const d = diffAudio.full[difficulty];
+  const audioFile = fullSongMode === 'original' ? d.original : d.accompany;
   currentAudio = new Audio(audioFile);
   let lastIdx = -1;
   // Show cover first
