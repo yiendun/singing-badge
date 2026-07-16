@@ -70,6 +70,10 @@ canvas { display:block; position:fixed; top:0; left:0; width:100%; height:100%; 
   0%,100%{ transform:scale(1); }
   50%{ transform:scale(1.15); }
 }
+@keyframes hsBlink {
+  0%,100%{ transform:scale(1); opacity:0.85; }
+  50%{ transform:scale(1.4); opacity:1; }
+}
 </style>
 </head>
 <body>
@@ -160,6 +164,7 @@ function buildRoom() {
   scene3d.add(top);
 
   buildNav();
+  createHotspotMarkers();
 }
 
 // ===== BOTTOM NAV DOTS =====
@@ -193,14 +198,94 @@ function updateNavHighlight(idx) {
   }
 }
 
+// ===== HOTSPOT DATA =====
+// Coordinates as percentages, audio file names
+const hotspotData = {
+  0: [ // 青蛙 scene
+    { x:26, y:63.6, label:'青蛙', audio:'vr/vocab-audio/重点词汇-青蛙.mp3' },
+    { x:52.3, y:66.7, label:'清溪', audio:'vr/vocab-audio/重点词汇-清溪.mp3' },
+  ],
+  1: [ // 小猪 scene
+    { x:20.8, y:63.2, label:'小猪', audio:'vr/vocab-audio/重点词汇-小猪.mp3' },
+    { x:16.5, y:16.5, label:'小屋', audio:'vr/vocab-audio/重点词汇-小屋.mp3' },
+  ],
+  2: [ // 鹩哥 scene
+    { x:38.5, y:55.6, label:'鹩哥', audio:'vr/vocab-audio/重点词汇-鹩哥.mp3' },
+  ],
+  3: [ // 狮子 scene
+    { x:70.5, y:16, label:'山窿', audio:'vr/vocab-audio/重点词汇-山窿.mp3' },
+    { x:61.3, y:52.5, label:'狮子', audio:'vr/vocab-audio/重点词汇-狮子.mp3' },
+  ],
+};
+
+const hsMarkers = []; // {el, pos3d, label, audio}
+const hsContainer = document.createElement('div');
+hsContainer.id = 'hs-labels';
+hsContainer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:75;';
+document.body.appendChild(hsContainer);
+
+let hsAudio = null;
+
+function createHotspotMarkers() {
+  // Clear old
+  hsMarkers.length = 0;
+  hsContainer.innerHTML = '';
+  const sceneHs = hotspotData[currentScene] || [];
+  const segStart = currentScene * (Math.PI/2); // Cylinder segment start angle
+  const segLen = Math.PI / 2;
+  sceneHs.forEach(hs => {
+    // Map percentage to cylinder angle and height
+    // x%: 0=left edge of segment, 100=right edge
+    const angle = segStart + (hs.x / 100) * segLen;
+    // y%: 0=top, 100=bottom of cylinder (y goes from -H/2 to +H/2)
+    const yPos = (0.5 - hs.y / 100) * H;
+    const xPos = R * Math.cos(angle);
+    const zPos = R * Math.sin(angle);
+    const pos3d = new THREE.Vector3(xPos, yPos, zPos);
+
+    // Create CSS label
+    const el = document.createElement('div');
+    el.style.cssText = 'position:absolute;pointer-events:auto;cursor:pointer;transform:translate(-50%,-50%);text-align:center;z-index:76;';
+    el.innerHTML = '<span style="display:block;width:14px;height:14px;border-radius:50%;background:rgba(255,215,0,0.85);margin:0 auto 2px;box-shadow:0 0 10px rgba(255,215,0,0.6);animation:hsBlink 1.5s ease-in-out infinite;"></span><span style="color:#fff;font-size:11px;font-weight:700;text-shadow:0 0 6px rgba(0,0,0,0.8);white-space:nowrap;">'+hs.label+'</span>';
+    el.addEventListener('click', (e) => { e.stopPropagation(); playHotspotAudio(hs); });
+    el.addEventListener('touchend', (e) => { e.stopPropagation(); playHotspotAudio(hs); });
+    hsContainer.appendChild(el);
+    hsMarkers.push({ el, pos3d, label:hs.label, audio:hs.audio });
+  });
+}
+
+function playHotspotAudio(hs) {
+  if (hsAudio) { hsAudio.pause(); hsAudio = null; }
+  hsAudio = new Audio(hs.audio);
+  hsAudio.volume = 0.7;
+  hsAudio.play().catch(() => {});
+  // Brief visual feedback
+  const el = document.querySelector('#hs-labels div');
+}
+
+function updateHotspotProjection() {
+  const halfW = window.innerWidth / 2;
+  const halfH = window.innerHeight / 2;
+  hsMarkers.forEach(m => {
+    const v = m.pos3d.clone();
+    v.project(camera);
+    const sx = (v.x * halfW) + halfW;
+    const sy = -(v.y * halfH) + halfH;
+    const behindCamera = v.z > 1;
+    m.el.style.left = sx + 'px';
+    m.el.style.top = sy + 'px';
+    m.el.style.opacity = behindCamera ? '0' : '1';
+  });
+}
+
 // ===== NAVIGATION =====
 let currentScene = 0;
 
 function goTo(idx) {
   currentScene = idx;
-  // Map: scene 0 at +45°, scene 1 at -45°, scene 2 at -135°, scene 3 at +135°
   targetLon = 45 - idx * 90;
   updateNavHighlight(idx);
+  createHotspotMarkers();
 }
 window.goTo = goTo;
 
@@ -270,6 +355,7 @@ function animate() {
   );
 
   renderer.render(scene3d, camera);
+  updateHotspotProjection();
 }
 
 // ===== AUDIO =====
