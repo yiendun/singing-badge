@@ -234,9 +234,8 @@ function createHotspotMarkers() {
   const segStart = currentScene * (Math.PI/2); // Cylinder segment start angle
   const segLen = Math.PI / 2;
   sceneHs.forEach(hs => {
-    // Map percentage to cylinder angle and height
-    // x%: 0=left edge of segment, 100=right edge
-    const angle = segStart + (hs.x / 100) * segLen;
+    // Map percentage to cylinder angle (mirrored: BackSide flips L/R)
+    const angle = segStart + ((100 - hs.x) / 100) * segLen;
     // y%: 0=top, 100=bottom of cylinder (y goes from -H/2 to +H/2)
     const yPos = (0.5 - hs.y / 100) * H;
     const xPos = R * Math.cos(angle);
