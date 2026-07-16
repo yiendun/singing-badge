@@ -301,8 +301,8 @@ renderer.domElement.addEventListener('pointerdown', e => {
 
 renderer.domElement.addEventListener('pointermove', e => {
   if (!isDragging) return;
-  targetLon += (e.clientX - lastX) * 0.3;
-  targetLat -= (e.clientY - lastY) * 0.12;
+  targetLon += (e.clientX - lastX) * 0.15;
+  targetLat -= (e.clientY - lastY) * 0.08;
   targetLat = Math.max(-35, Math.min(35, targetLat));
   lastX = e.clientX; lastY = e.clientY;
 });
