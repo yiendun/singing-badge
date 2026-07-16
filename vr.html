@@ -355,6 +355,19 @@ function animate() {
 
   renderer.render(scene3d, camera);
   updateHotspotProjection();
+  // Auto-detect which scene the camera faces
+  const sceneAngles = [45, -45, -135, 135];
+  let best = 0, bestDist = 999;
+  sceneAngles.forEach((a, i) => {
+    let d = Math.abs(lon - a);
+    if (d > 180) d = 360 - d;
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  if (best !== currentScene) {
+    currentScene = best;
+    updateNavHighlight(best);
+    createHotspotMarkers();
+  }
 }
 
 // ===== AUDIO =====
