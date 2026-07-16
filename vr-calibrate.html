@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>热点坐标采集</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; overflow:hidden; touch-action:none; font-family:monospace; }
+img { width:100%; height:100%; object-fit:contain; display:block; }
+#marker {
+  position:fixed; width:40px; height:40px; border-radius:50%;
+  border:3px solid #FFD700; background:rgba(255,215,0,0.3);
+  transform:translate(-50%,-50%); pointer-events:none; z-index:10;
+  box-shadow:0 0 16px rgba(255,215,0,0.6); display:none;
+}
+#info {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:20;
+  background:rgba(0,0,0,0.8); color:#FFD700; padding:10px 18px; border-radius:10px;
+  font-size:14px; text-align:center; line-height:1.6;
+}
+#btn-row {
+  position:fixed; bottom:20px; left:0; right:0; z-index:20;
+  display:flex; justify-content:center; gap:12px; padding:0 16px;
+}
+.btn {
+  padding:10px 20px; border-radius:20px; border:none;
+  font-size:14px; font-weight:700; cursor:pointer; color:#fff;
+}
+.btn-save { background:#D4A843; }
+.btn-next { background:#C41E3A; }
+.btn-reset { background:#555; }
+
+select {
+  position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:20;
+  padding:8px 16px; border-radius:12px; border:2px solid #D4A843;
+  background:#000; color:#fff; font-size:15px;
+}
+
+#output {
+  position:fixed; top:60px; left:16px; right:16px; z-index:20;
+  background:rgba(0,0,0,0.75); color:#0f0; padding:8px 12px;
+  border-radius:8px; font-size:11px; max-height:120px; overflow-y:auto;
+  display:none;
+}
+</style>
+</head>
+<body>
+
+<select id="sceneSelect">
+  <option value="0">🐸 青蛙场景</option>
+  <option value="1">🐷 小猪场景</option>
+  <option value="2">🐦 鹩哥场景</option>
+  <option value="3">🦁 狮子场景</option>
+</select>
+
+<img id="img" src="" alt="">
+<div id="marker"></div>
+<div id="info">👆 点击图片放置热点标记<br>当前: <span id="posText">未设置</span></div>
+<div id="btn-row">
+  <button class="btn btn-reset" onclick="resetAll()">清空全部</button>
+  <button class="btn btn-next" onclick="nextScene()">下一场景 ▶</button>
+  <button class="btn btn-save" onclick="copyOutput()">📋 复制坐标</button>
+</div>
+<div id="output"></div>
+
+<script>
+const scenes = ['青蛙','小猪','鹩哥','狮子'];
+const points = [[],[],[],[]]; // [sceneIdx][{x,y,label}]
+let currentScene = 0;
+let markerPlaced = false;
+
+function loadScene(idx) {
+  currentScene = idx;
+  const names = ['vr/青蛙.jpg','vr/小猪.jpg','vr/鹩哥.jpg','vr/狮子.jpg'];
+  document.getElementById('img').src = names[idx] + '?t=' + Date.now();
+  document.getElementById('sceneSelect').value = idx;
+  markerPlaced = false;
+  document.getElementById('marker').style.display = 'none';
+  document.getElementById('posText').textContent = points[idx].length + ' 个热点';
+  updateOutput();
+}
+
+document.getElementById('sceneSelect').onchange = e => loadScene(+e.target.value);
+
+document.getElementById('img').addEventListener('click', e => {
+  const img = e.target;
+  const rect = img.getBoundingClientRect();
+  const xPct = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const yPct = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+
+  const label = prompt('热点名称（如：狮子头、音符等）：', '热点');
+  if (!label) return;
+
+  points[currentScene].push({ x: parseFloat(xPct), y: parseFloat(yPct), label });
+
+  // Show marker
+  const m = document.getElementById('marker');
+  m.style.display = 'block';
+  m.style.left = e.clientX + 'px';
+  m.style.top = e.clientY + 'px';
+  markerPlaced = true;
+
+  document.getElementById('posText').textContent = label + ' (' + xPct + '%, ' + yPct + '%)';
+  updateOutput();
+});
+
+function updateOutput() {
+  const out = document.getElementById('output');
+  let html = '<b>所有热点坐标 (百分比):</b><br>';
+  scenes.forEach((name, i) => {
+    if (points[i].length > 0) {
+      html += '<b>' + name + ':</b><br>';
+      points[i].forEach(p => {
+        html += '  ' + p.label + ': ' + p.x + '%, ' + p.y + '%<br>';
+      });
+    }
+  });
+  out.innerHTML = html;
+  out.style.display = 'block';
+}
+
+function copyOutput() {
+  let json = {};
+  scenes.forEach((name, i) => {
+    json[name] = points[i];
+  });
+  const text = JSON.stringify(json, null, 2);
+  navigator.clipboard.writeText(text).then(() => alert('已复制到剪贴板！'));
+}
+
+function nextScene() {
+  loadScene((currentScene + 1) % 4);
+}
+
+function resetAll() {
+  if (confirm('清空所有热点？')) {
+    for (let i = 0; i < 4; i++) points[i] = [];
+    markerPlaced = false;
+    document.getElementById('marker').style.display = 'none';
+    document.getElementById('posText').textContent = '未设置';
+    updateOutput();
+  }
+}
+
+loadScene(0);
+</script>
+</body>
+</html>
