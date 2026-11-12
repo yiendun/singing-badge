@@ -53,6 +53,11 @@ body {
   transition:transform 0.15s;
 }
 .btn-start:active { transform:scale(0.95); }
+.btn-start.alt {
+  background:linear-gradient(135deg, var(--gold), #E8B84B);
+  box-shadow:0 6px 24px rgba(212,168,67,0.4);
+  margin-top:14px;
+}
 
 /* ===== Step Header ===== */
 .step-header { width:100%; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
@@ -220,7 +225,8 @@ body {
     <div class="step-preview" id="stepDots">
       <div class="step-dot">📖</div><div class="step-dot">🎵</div><div class="step-dot">🎧</div><div class="step-dot">🌟</div>
     </div>
-    <button class="btn-start" onclick="startChallenge()">开 始 挑 战</button>
+    <button class="btn-start" onclick="startChallenge()">学唱这首歌</button>
+    <button class="btn-start alt" onclick="startSinging()">演唱这首歌</button>
     <a href="vr.html" style="margin-top:14px;color:var(--blue);font-size:14px;text-decoration:underline;">🌐 进入VR探索场景</a>
   </div>
 </div>
@@ -716,6 +722,20 @@ function startChallenge() {
   updateAllFragments();
   // Go to step 1
   showStep1();
+}
+
+function startSinging() {
+  stopAllAudio();
+  stopAllRecording();
+  fragments = [false,false,false,false];
+  currentVocab = 0;
+  vocabRecorded = new Array(9).fill(false);
+  echoRound = 0;
+  fullSongMode = 'original';
+  difficulty = 1;
+  updateAllFragments();
+  // 直接进入第四关：演唱整首
+  showStep4();
 }
 
 // ===== STEP 1: 念一念 =====
